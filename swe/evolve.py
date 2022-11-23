@@ -15,7 +15,7 @@ import LinearSolver as ls
 '''
 Solve over all time steps
 '''
-def evolve(N=100,M=50,degree=1,k=50,tol=1e-6,ctol=1e-14,
+def evolve(N=100,M=50,degree=1,k=50,tol=1e-6,
            solver=ls.cgmresWrapper):
     #Get linear forms and Firedrake problem class
     forms, prob = swe.linforms(N=N,M=M,degree=degree)
@@ -41,7 +41,7 @@ def evolve(N=100,M=50,degree=1,k=50,tol=1e-6,ctol=1e-14,
         #Initial guess at previous solution
         x0 = refd.flatten(sol[-1].dat.data)
         #Solve
-        z, _ = solver(forms, x0=np.zeros_like(forms['b']), k=k, tol=tol, ctol=ctol)
+        z, _ = solver(forms, x0=np.zeros_like(forms['b']), k=k, tol=tol)
         #Convert back to FD
         z0.assign(refd.nptofd(prob,z))
         #Compute conserved quantities

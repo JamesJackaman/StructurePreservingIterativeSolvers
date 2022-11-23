@@ -13,7 +13,7 @@ import solvers
 import lkdvRK
 
 def cgmresWrapper(dic,x0,k,prob=None,pre=None,
-                  tol=1e-50,ctol=1e-12,contol=10):
+                  tol=1e-50,contol=10):
     #Unpack
     A = dic['A']
     b = dic['b']
@@ -53,7 +53,7 @@ def cgmresWrapper(dic,x0,k,prob=None,pre=None,
     #If tolerance is not very crazy small, use cgmres with a tolerance
     if tol>1e-20:
         out = solvers.cgmres(A=A,b=b,x0=x0,k=k,pre=pre,
-                     tol=tol,ctol=ctol,contol=contol,
+                     tol=tol,contol=contol,
                      conlist=conlist)
     #If tolerance is set to be unrealistically small, use prototypical
     #GMRES to enforce constraints one-by-one
@@ -63,7 +63,7 @@ def cgmresWrapper(dic,x0,k,prob=None,pre=None,
     return out
 
 
-def gmresWrapper(dic,x0,k,tol=1e-50,pre=None,ctol=None,contol=None,prob=None):
+def gmresWrapper(dic,x0,k,tol=1e-50,pre=None,contol=None,prob=None):
 
     A = dic['A']
     b = dic['b']
@@ -74,7 +74,7 @@ def gmresWrapper(dic,x0,k,tol=1e-50,pre=None,ctol=None,contol=None,prob=None):
 
 
 #Wrapper for an "exact" linear solver
-def exact(dic,x0,k=None,tol=None,prob=None,pre=None,ctol=None,contol=None):
+def exact(dic,x0,k=None,tol=None,prob=None,pre=None,contol=None):
     
     A = dic['A']
     b = dic['b']

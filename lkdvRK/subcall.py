@@ -36,7 +36,6 @@ if __name__=="__main__":
     parser.add_argument('--N', type=int,default=10)
     parser.add_argument('--M', type=int,default=50)
     parser.add_argument('--tol', type=float, default=1e-6)
-    parser.add_argument('--ctol', type=float, default=1e-10)
     parser.add_argument('--k', type=int, default=50)
     args, _ = parser.parse_known_args()
     
@@ -50,7 +49,7 @@ if __name__=="__main__":
     #Compute error
     err = evolve.evolve(N=args.N,M=args.M,
                         degree=args.degree,tstages=args.tstages,
-                        k=args.k,tol=args.tol,ctol=args.ctol,
+                        k=args.k,tol=args.tol,
                         solver=solver)
     
     #Postprocess keys

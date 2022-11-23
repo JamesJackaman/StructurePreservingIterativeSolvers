@@ -17,7 +17,7 @@ import LinearSolver as ls
 Solve over all time steps
 '''
 def evolve(N=10,M=50,degree=1,tstages=2,T=1,
-           k=50,tol=1e-6,ctol=1e-12,contol=10,
+           k=50,tol=1e-6,contol=10,
            solver=ls.cgmresWrapper,
            counter=None,solver_str=None):
     
@@ -59,7 +59,7 @@ def evolve(N=10,M=50,degree=1,tstages=2,T=1,
                                    zinit=sol[-1])
         #Solve
         z, sdict = solver(forms, x0=z, prob = prob, pre = pre,
-                          k=k, tol=tol, ctol=ctol, contol=contol)
+                          k=k, tol=tol, contol=contol)
         if counter==True:
             #Save number of iterations required
             steps.append(sdict['steps'])

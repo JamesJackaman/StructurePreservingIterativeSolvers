@@ -82,10 +82,11 @@ def gmres(A, b, x0, k, tol = 1e-50, pre = None):
 def cgmres(A, b ,x0, k,
            tol=1e-8,
            contol=10,#contol*tol is when constraints are first enforced
-           ctol=1e-12,#ctol sets to which accuracy the constraints are
-                      #enforced, needs to be sufficiently small
            conlist=[],
            pre = None):
+
+    ctol = 1e-12 #specify the tolerance to which constraints *must* be
+                 #enforced
     
     #If not using preconditioner, set up identity as placeholder
     if pre is None:
