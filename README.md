@@ -39,9 +39,9 @@ The linear systems we solve correspond to linear finite element approximations, 
 ### 1D Linear KdV equation
 
 We approximate the solution of
-$$
+```math
 u_t + u_x + u_{xxx} = 0,
-$$
+```
 which conserves a mass $\int_\Omega u dx$, momentum $\frac12 \int_\Omega u^2 dx$, and energy $\frac12 \int_\Omega u_x^2 - u^2 dx$ over a spatially periodic domain.
 
 #### Second order temporal discretisation
@@ -67,11 +67,16 @@ These experiments can be found in lkdvRK.
 #### 2D Linear rotating shallow water equations
 
 We approximate the solution of 
-$$
+```math
 {\bf u}_t + f {\bf u}^{\perp} + c^2 \nabla\rho = 0 \\
 \rho_t + \nabla \cdot {\bf u} = 0, 
-$$
-where $f$ and $c$ are constants, and $\perp = \bf{e}_3 \times \bf{u}$. This PDE conserves a mass $\int_\Omega \rho \ dx$ and an energy $\frac12 \int_\Omega {\bf u}^2 + c^2 \rho^2 \ dx$ over periodic domains. Code corresponding to this problem can be found in swe.
+```
+where $f$ and $c$ are constants, and
+```math
+{\bf u}^{\perp} = {\bf e}_3 \times {\bf u}
+.
+```
+This PDE conserves a mass $\int_\Omega \rho \ dx$ and an energy $\frac12 \int_\Omega {\bf u}^2 + c^2 \rho^2 \ dx$ over periodic domains. Code corresponding to this problem can be found in swe.
 
 | Executable functions | Implemented        |
 | -------------------- | ------------------ |
@@ -82,10 +87,10 @@ where $f$ and $c$ are constants, and $\perp = \bf{e}_3 \times \bf{u}$. This PDE 
 ### 2D Heat equation
 
 We approximate the solution of 
-$$
+```math
 u_t - \Delta u = 0
 ,
-$$
+```
 which preserves mass $\int_\Omega u dx$ and dissipates energy $\frac{d}{dt} \int_\Omega u^2 \ dx = - \int_\Omega \nabla u \cdot \nabla u \ dx $. Here the energy is constrained to match the dissipation rate of the numerical scheme.
 
 | Executable functions | Implemented        |
