@@ -8,7 +8,7 @@ import matplotlib.pylab as plt
 import lkdv
 import refd
 import LinearSolver as ls
-import Visualise as vis
+import visualise as vis
 
 
 if __name__=="__main__":
