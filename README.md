@@ -6,7 +6,7 @@
 
 This repository requires [Firedrake](https://www.firedrakeproject.org/) and [Irksome](https://firedrakeproject.github.io/Irksome). The Firedrake install script can be downloaded [here](https://www.firedrakeproject.org/download.html), and can be installed (with Irksome) into a new virtual envionrment with `python3 firedrake-install --install irksome`. Irksome is only a requirement for the [Linear KdV equation with RK temporal discretisation](#runge-kutta-in-time).
 
-Additional dependencies need to be installed by running ``setup.py`` inside the virtual environment.
+Before using this code it is recommended to run `setup.py` inside the virtual environment. This will install the additional dependencies [pandas](https://pandas.pydata.org) and [pickle](https://docs.python.org/3/library/pickle.html), in addition to creating the subfolder `plots`.
 
 ## What is CGMRES?
 
@@ -40,8 +40,7 @@ The linear systems we solve correspond to linear finite element approximations, 
 
 We approximate the solution of
 $$
-u_t + u_x + u_{xxx} = 0
-,
+u_t + u_x + u_{xxx} = 0,
 $$
 which conserves a mass $\int_\Omega u dx$, momentum $\frac12 \int_\Omega u^2 dx$, and energy $\frac12 \int_\Omega u_x^2 - u^2 dx$ over a spatially periodic domain.
 
@@ -70,8 +69,7 @@ These experiments can be found in lkdvRK.
 We approximate the solution of 
 $$
 {\bf u}_t + f {\bf u}^{\perp} + c^2 \nabla\rho = 0 \\
-\rho_t + \nabla \cdot {\bf u} = 0
-,
+\rho_t + \nabla \cdot {\bf u} = 0, 
 $$
 where $f$ and $c$ are constants, and $\perp = \bf{e}_3 \times \bf{u}$. This PDE conserves a mass $\int_\Omega \rho \ dx$ and an energy $\frac12 \int_\Omega {\bf u}^2 + c^2 \rho^2 \ dx$ over periodic domains. Code corresponding to this problem can be found in swe.
 
