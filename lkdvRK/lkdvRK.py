@@ -61,6 +61,17 @@ def linforms(N=100,M=50,degree=1,tstages=2,T=10,t=Constant(0),zinit=None):
         g = uh.dx(0)*vh*dx - jump(uh,n[0])*avg(vh)*dS 
         return g
 
+    #Find static v
+    def v_finder(uh):
+        wh = w_finder(uh)
+        vh = Function(Z.sub(0))
+        phi = TestFunction(Z.sub(0))
+        form = vh * phi * dx - uh * phi * dx - gfunc(wh,phi)
+        solve(form==0,vh,
+              solver_parameters={'ksp_type': 'preonly',
+                                 'pc_type': 'lu'})
+        return vh
+    
     #Find static w
     def w_finder(uh):
         wh = Function(Z.sub(0))
@@ -78,6 +89,7 @@ def linforms(N=100,M=50,degree=1,tstages=2,T=10,t=Constant(0),zinit=None):
     x = SpatialCoordinate(Z.mesh())
     if zinit==None:
         u0.assign(project(prob.exact(x[0],t),Z.sub(0)))
+        v0.assign(v_finder(u0)) #Assign v
         w0.assign(w_finder(u0)) #Assign w
     else:
         z0.sub(0).assign(zinit.sub(0))

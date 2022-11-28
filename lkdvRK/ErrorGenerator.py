@@ -14,7 +14,7 @@ if __name__=="__main__":
     Processes = []
 
     N = 10
-    M = 200
+    M = 400
     k = 50 #Max iterations
     ctol = 1e-12 #Constraint enforcement tolerance
     
@@ -31,7 +31,7 @@ if __name__=="__main__":
     #same length
     tstages = [2,3,4]
     degrees = [3,4,5]
-    tols = [1e-4,1e-5,1e-7]
+    tols = [1e-4,1e-5,1e-8]
 
     #generate the data
     for degree in degrees:
