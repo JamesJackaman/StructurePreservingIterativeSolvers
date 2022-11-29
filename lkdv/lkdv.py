@@ -12,7 +12,7 @@ import refd
 #Define class containing problem parameters and other globally useful
 #objects
 class problem(object):
-    def __init__(self,N,M,degree,space='CG'):
+    def __init__(self,N,M,degree,space):
         self.mlength = 40 #length of spatial mesh
         self.degree = degree #spatial polynomial degree
         self.dim = 3 #Save the dimension of the problem
@@ -42,7 +42,7 @@ zinit - the initial condition in terms of the linear system, if None
 project exact solution at initial time into function space
 
 '''
-def linforms(N=100,M=50,degree=1,T=1,space='CG',zinit=None):
+def linforms(N=100,M=50,degree=1,T=1,space='DG',zinit=None):
     #set up problem class
     prob = problem(N=N,M=M,degree=degree,space=space)
     #Set up finite element stuff
