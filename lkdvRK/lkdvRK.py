@@ -14,7 +14,7 @@ import refd
 
 #Initialise problem, with customisable 
 class problem(object):
-    def __init__(self,N,M,degree,tstages,space='CG',T=1):
+    def __init__(self,N,M,degree,tstages,space='DG',T=1):
         self.mlength = 40
         self.degree = degree
         self.tstages = tstages

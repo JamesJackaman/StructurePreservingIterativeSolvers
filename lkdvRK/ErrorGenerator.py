@@ -31,7 +31,7 @@ if __name__=="__main__":
     #same length
     tstages = [2,3,4]
     degrees = [3,4,5]
-    tols = [1e-4,1e-5,1e-8]
+    tols = [1e-3,1e-5,1e-7]
 
     #generate the data
     for degree in degrees:
