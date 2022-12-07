@@ -10,7 +10,7 @@ import os
 
 #Local imports
 import LinearSolver as ls
-import evolve
+import Evolve
 
 #Convert string to python function
 def choose_solver(string):
@@ -47,7 +47,7 @@ if __name__=="__main__":
     print('degree = ', args.degree)
     
     #Compute error
-    err = evolve.evolve(N=args.N,M=args.M,
+    err = Evolve.evolve(N=args.N,M=args.M,
                         degree=args.degree,tstages=args.tstages,
                         k=args.k,tol=args.tol,
                         solver=solver)

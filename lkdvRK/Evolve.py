@@ -16,7 +16,7 @@ import LinearSolver as ls
 '''
 Solve over all time steps
 '''
-def evolve(N=10,M=50,degree=1,tstages=2,T=1,
+def evolve(N=10,M=50,degree=3,tstages=2,T=1,
            k=50,tol=1e-6,contol=10,
            solver=ls.cgmresWrapper,
            counter=None,solver_str=None):
