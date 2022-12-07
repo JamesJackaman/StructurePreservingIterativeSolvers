@@ -1,6 +1,6 @@
 # Structure preserving iterative linear solvers
 
-**This repository is a suppliment to  _JackamanMaclachlan2022_, and contains a conservative GMRES implementation in addition to experiments for various constrained linear systems.**
+**This repository is a suppliment to _“Preconditioned Krylov solvers for structure-preserving discretisations” by Jackaman and Maclachlan_, and contains a conservative GMRES implementation in addition to experiments for various constrained linear systems.**
 
 ## Installation
 
@@ -16,11 +16,13 @@ CGMRES is a constrained GMRES algorithm, where before termination a list of user
 
 We consider a variety of test problems, which are self contained within subfolders. Each test problem contains a subset of the following python scripts which can be called. More details on these functions can be found **[here](docs/experiments.md)**.
 
-**[SingleSolve.py](docs/experiments.md#singlesolve.py)**: _Solves a single step for a given problem for a variety of linear solvers, comparing the error (to a direct solver), residual and deviation in conserved quantity. Results are typically tabulated and plotted by `visualise.py`._
+**[SingleSolve.py](docs/experiments.md#singlesolve.py)**: _Solves a single step for a given problem for a variety of linear solvers, comparing the error (to a direct solver), residual and deviation in conserved quantity. Results are typically tabulated and plotted (automatically by `visualise.py`)._
 
-**[evolve.py](docs/experiments.md#evolve.py)**: _Generates a solution over all time steps using a given linear solver. Outputs the global deviation in conserved quantities. Sometimes also outputs errors over time._
+**[Evolve.py](docs/experiments.md#evolve.py)**: _Generates a solution over all time steps using a given linear solver. Outputs the global deviation in conserved quantities. Sometimes also outputs errors over time._
 
-**[Error generation](docs/experiments.md#error-generation)**: _This is only implemented for [Runge-Kutta formulation of linear KdV](#runge-kutta-in-time) and is composed of `ErrorGenerator.py` (generates errors in parallel), `subcall.py` (a call to [evolve.py](docs/experiments.md#evolve.py) using an argparser), and `ErrorPlotter.py` (generates plots by reading data written in `ErrorGenerator.py`)_
+**[Error generation](docs/experiments.md#error-generation)**: _This is only implemented for [Runge-Kutta formulation of linear KdV](#runge-kutta-in-time) and is composed of `ErrorGenerator.py` (generates errors in parallel), `subcall.py` (a call to [Evolve.py](docs/experiments.md#evolve.py) using an argparser), and `ErrorPlotter.py` (generates plots by reading data written in `ErrorGenerator.py`)_
+
+**Plotting**: Almost all of the above scripts generate plots. By default, these plots will be saved to the subfolder `plots` and are not shown interactively.
 
 The additional auxiliary modules are also required, we describe them here for completeness. 
 
@@ -34,7 +36,7 @@ The additional auxiliary modules are also required, we describe them here for co
 
 ## Test problems
 
-The linear systems we solve correspond to linear finite element approximations, for details of the discretisation see _JackamanMaclachlan2022_. Below we describe the PDE, the continuous form of the invariants and the code implemented for a given experiments.
+The linear systems we solve correspond to linear finite element approximations, for details of the discretisation see [this paper](#structure-preserving-iterative-linear-solvers). Below we describe the PDE, the continuous form of the invariants and the code implemented for a given experiments.
 
 ### 1D Linear KdV equation
 
@@ -48,21 +50,21 @@ which conserves a mass $\int_\Omega u dx$, momentum $\frac12 \int_\Omega u^2 dx$
 
 This experiments code can be found in the folder lkdv.
 
-| Executable functions | Implemented        |
-| -------------------- | ------------------ |
-| `SingleSolve.py`     | :white_check_mark: |
-| `evolve.py`          | :white_check_mark: |
-| Error generation     | :x:                |
+| Executable functions                  | Implemented        |
+| ------------------------------------- | ------------------ |
+| `SingleSolve.py`                      | :white_check_mark: |
+| `Evolve.py`                           | :white_check_mark: |
+| `ErrorGenerator.py`/`ErrorPlotter.py` | :x:                |
 
 #### Runge-Kutta in time
 
 These experiments can be found in lkdvRK.
 
-| Executable functions | Implemented        |
-| -------------------- | ------------------ |
-| `SingleSolve.py`     | :white_check_mark: |
-| `evolve.py`          | :white_check_mark: |
-| Error generation     | :white_check_mark: |
+| Executable functions                  | Implemented        |
+| ------------------------------------- | ------------------ |
+| `SingleSolve.py`                      | :white_check_mark: |
+| `Evolve.py`                           | :white_check_mark: |
+| `ErrorGenerator.py`/`ErrorPlotter.py` | :white_check_mark: |
 
 #### 2D Linear rotating shallow water equations
 
@@ -76,13 +78,13 @@ where $f$ and $c$ are constants, and
 {\bf u}^{\perp} = {\bf e}_3 \times {\bf u}
 .
 ```
-This PDE conserves a mass $\int_\Omega \rho \ dx$ and an energy $\frac12 \int_\Omega {\bf u}^2 + c^2 \rho^2 \ dx$ over periodic domains. Code corresponding to this problem can be found in swe.
+This PDE conserves a mass $\int_\Omega \rho \ dx$ and an energy $\frac12 \int_\Omega {\bf u}^2 + c^2 \rho^2 \ dx$ over periodic domains. Code corresponding to this problem can be found in the subfolder `swe`.
 
-| Executable functions | Implemented        |
-| -------------------- | ------------------ |
-| `SingleSolve.py`     | :white_check_mark: |
-| `evolve.py`          | :white_check_mark: |
-| Error generation     | :x:                |
+| Executable functions                  | Implemented        |
+| ------------------------------------- | ------------------ |
+| `SingleSolve.py`                      | :white_check_mark: |
+| `Evolve.py`                           | :white_check_mark: |
+| `ErrorGenerator.py`/`ErrorPlotter.py` | :x:                |
 
 ### 2D Heat equation
 
@@ -93,8 +95,8 @@ u_t - \Delta u = 0
 ```
 which preserves mass $\int_\Omega u dx$ and dissipates energy $\frac{d}{dt} \int_\Omega u^2 \ dx = - \int_\Omega \nabla u \cdot \nabla u \ dx $. Here the energy is constrained to match the dissipation rate of the numerical scheme.
 
-| Executable functions | Implemented        |
-| -------------------- | ------------------ |
-| `SingleSolve.py`     | :white_check_mark: |
-| `evolve.py`          | :x:                |
-| Error generation     | :x:                |
+| Executable functions                  | Implemented        |
+| ------------------------------------- | ------------------ |
+| `SingleSolve.py`                      | :white_check_mark: |
+| `Evolve.py`                           | :x:                |
+| `ErrorGenerator.py`/`ErrorPlotter.py` | :x:                |

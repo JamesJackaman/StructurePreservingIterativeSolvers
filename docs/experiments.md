@@ -8,7 +8,7 @@ Here we describe the functionality of python files we use in the examples.
 
 Solves a single step for a given problem for CGMRES, GMRES and exact linear solvers. The relative error is compared against the exact linear solver and enforcement of the constraints is checked. The auxiliary file `visualise.py` is then typically used to study the deviation in invariants at each iteration and to plot this graphically. 
 
-## evolve.py
+## Evolve.py
 
 ### Functionality
 
@@ -56,7 +56,7 @@ Here we refer to three python files, which combined compute and visualise the er
 
 #### Functionality
 
-Call `evolve.py` with an argparser for variable `degree`. `tstages` and `tol`. Used for parallel calls and to avoid error generation failing if an error is thrown in one instance of `evolve.py`. 
+Call `Evolve.py` with an argparser for variable `degree`. `tstages` and `tol`. Used for parallel calls and to avoid error generation failing if an error is thrown in one instance of `Evolve.py`. 
 
 #### Input
 
