@@ -1,10 +1,10 @@
 # Solvers
 
 Here we describe the functions in `solvers.py`. The script is comprised of three functions. The first is an implementation of GMRES, the second an implementation of CGMRES and the final an implementation of prototypical CGMRES. Throughout, we are solving
-$$
+```math
 A {\bf x} = {\bf b}
 ,
-$$
+````
 subject to some list of (non)linear constraints `conlist`.
 
 ## GMRES
