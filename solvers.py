@@ -219,8 +219,8 @@ def cgmres(A, b ,x0, k,
                     warnings.warn("Iteration %d failed to preserve constraints with deviation of %e" % (j,solve.constr_violation),
                                   RuntimeWarning)
             except:
-                warning('Constrained solve failed, standard solve used for now.' \
-                        + ' The constrained system being used likely does not make sense.')
+                warning('Constrained solve failed, defaulted to standard solve for iteration %d.' % j \
+                        + ' Problem likely overconstrained, a smaller solver tolerance may be required.')
                 solve = spo.minimize(func,y0,tol=None,jac=jac,hess=hess,
                                      constraints=[],
                                      method='trust-constr',
