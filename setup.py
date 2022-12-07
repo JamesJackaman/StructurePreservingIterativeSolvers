@@ -14,10 +14,6 @@ try:
 except:
     raise AssertionError('Users must run this script within a Firedrake virtual environment')
 try:
-    import scipy
-except:
-    os.system('pip3 install scipy')
-try:
     import pandas
 except:
     os.system('pip3 install pandas')
