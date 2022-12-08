@@ -20,7 +20,7 @@ This repository is not intended to maintain future compatibility with its depend
 
 ### First thing to run
 
-Before using this code it is recommended to run `setup.py` inside the virtual environment. This will install the additional dependency [pandas](https://pandas.pydata.org), in addition to creating the subfolder `plots`. By default,  `setup.py` will install the latest versions of pandas. The stable version is  `1.5.0`. 
+Before using this code it is recommended to run `setup.py` inside the virtual environment. This will install the additional dependency [pandas](https://pandas.pydata.org) (version `1.5.0`), in addition to creating the subfolder `plots`.
 
 ## What is CGMRES?
 
