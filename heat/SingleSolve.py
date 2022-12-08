@@ -59,15 +59,15 @@ if __name__=="__main__":
     print('gmres error =', np.max(np.abs(x-x_dir)/x_dir))
 
 
-    inv = heat.compute_invariants(prob,x,z0)
+    inv = heat.compute_invariants(prob,x,z0.dat.data)
     print('gmres mass deviation =', inv['mass']-params['m0'])
     print('gmres energy deviation =', inv['energy']-params['e0'])
 
-    invcon = heat.compute_invariants(prob,x_con,z0)
+    invcon = heat.compute_invariants(prob,x_con,z0.dat.data)
     print('cgmres mass deviation =', invcon['mass']-params['m0'])
     print('cgmres energy deviation =', invcon['energy']-params['e0'])
 
-    invdir = heat.compute_invariants(prob,x_dir,z0)
+    invdir = heat.compute_invariants(prob,x_dir,z0.dat.data)
     print('direct solver mass deviation =', invdir['mass']-params['m0'])
     print('direct solver energy deviation =', invdir['energy']-params['e0'])
     

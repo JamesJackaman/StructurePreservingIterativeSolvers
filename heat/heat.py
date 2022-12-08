@@ -128,9 +128,12 @@ def compute_invariants(prob,uvec,uold):
         
     z = refd.nptofd(prob,uvec)
     try:
-        z_ = refd.nptofd(prob,uold)
+        z_ = refd.nptofd(prob,uold) #Assume uold value is being input
+                                    #as a vector (like uvec) and
+                                    #convert to Firedrake function
     except:
-        z_ = uold
+        z_ = uold #If this is not true, it has probably accidentally
+                  #been input as a Firedrake vector so do nothing
 
     zmid = 0.5 * (z + z_)
     mass = assemble(z*dx)

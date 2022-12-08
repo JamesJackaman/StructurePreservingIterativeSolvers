@@ -24,7 +24,7 @@ def tabulator(params,prob,dict_list,filename=None):
         dev1 = []
         dev2 = []
         for j in range(1,np.shape(data['x'])[0]):
-            inv = heat.compute_invariants(prob,data['x'][j],data['z0'])
+            inv = heat.compute_invariants(prob,data['x'][j],data['z0'].dat.data)
             dev1.append(inv['mass'] - params['m0'])
             dev2.append(inv['energy'] - params['e0'])
 
