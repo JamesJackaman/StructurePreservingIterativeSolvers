@@ -16,4 +16,4 @@ except:
 try:
     import pandas
 except:
-    os.system('pip3 install pandas')
+    os.system('pip3 install pandas==1.5.0')
