@@ -17,7 +17,3 @@ try:
     import pandas
 except:
     os.system('pip3 install pandas')
-try:
-    import pickle
-except:
-    os.system('pip3 install pickle')
