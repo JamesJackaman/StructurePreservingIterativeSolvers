@@ -4,9 +4,23 @@
 
 ## Installation
 
+### Install the latest version of all components
+
 This repository requires [Firedrake](https://www.firedrakeproject.org/) and [Irksome](https://firedrakeproject.github.io/Irksome). The Firedrake install script can be downloaded [here](https://www.firedrakeproject.org/download.html), and can be installed (with Irksome) into a new virtual envionrment with `python3 firedrake-install --install irksome`. Irksome is only a requirement for the [Linear KdV equation with RK temporal discretisation](#runge-kutta-in-time).
 
-Before using this code it is recommended to run `setup.py` inside the virtual environment. This will install the additional dependencies [pandas](https://pandas.pydata.org) and [pickle](https://docs.python.org/3/library/pickle.html), in addition to creating the subfolder `plots`.
+### Install a stable version of all components
+
+This repository is not intended to maintain future compatibility with its dependencies, as this may effect the reproducabilty of results displayed here. To install a stable version of the code we recommend the following.
+
+1. To install a stable version of Firedrake version into a new virtual environment use `python3 firedrake-install 10.5281/zenodo.7414962`. This will install the version of Firedrake used in the associated paper. 
+   - The Zenodo URL can be found [here](https://zenodo.org/record/7414962).
+   - The DOI is 10.5281/zenodo.7414962.
+   - The tag in the [Firedrake repo](https://github.com/firedrakeproject/firedrake) is `Firedrake_20221208.0`. 
+3. We recommend a manual installation of [Irksome](https://firedrakeproject.github.io/Irksome) with the git hash `1f5d7d6800a1f03ba1ce4f755fc500e33415966b` checked out.
+
+### First thing to run
+
+Before using this code it is recommended to run `setup.py` inside the virtual environment. This will install the additional dependency [pandas](https://pandas.pydata.org), in addition to creating the subfolder `plots`. By default,  `setup.py` will install the latest versions of pandas. The stable version is  `1.5.0`. 
 
 ## What is CGMRES?
 
@@ -66,7 +80,7 @@ These experiments can be found in lkdvRK.
 | `Evolve.py`                           | :white_check_mark: |
 | `ErrorGenerator.py`/`ErrorPlotter.py` | :white_check_mark: |
 
-#### 2D Linear rotating shallow water equations
+### 2D Linear rotating shallow water equations
 
 We approximate the solution of 
 ```math
