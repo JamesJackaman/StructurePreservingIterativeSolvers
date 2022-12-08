@@ -12,7 +12,7 @@ This repository requires [Firedrake](https://www.firedrakeproject.org/) and [Irk
 
 This repository is not intended to maintain future compatibility with its dependencies, as this may effect the reproducabilty of results displayed here. To install a stable version of the code we recommend the following.
 
-1. To install a stable version of Firedrake version into a new virtual environment use `python3 firedrake-install 10.5281/zenodo.7414962`. This will install the version of Firedrake used in the associated paper. 
+1. To install a stable version of Firedrake into a new virtual environment use `python3 firedrake-install 10.5281/zenodo.7414962`. This will install the version used in the associated paper. 
    - The Zenodo URL can be found [here](https://zenodo.org/record/7414962).
    - The DOI is 10.5281/zenodo.7414962.
    - The tag in the [Firedrake repo](https://github.com/firedrakeproject/firedrake) is `Firedrake_20221208.0`. 
