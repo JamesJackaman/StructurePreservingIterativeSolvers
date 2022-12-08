@@ -141,6 +141,8 @@ def DeviationPlotter(tol=1e-6,
     
     plt.savefig(filename)
 
+    print('Figure saved as %s' % filename)
+
     return None
 
 

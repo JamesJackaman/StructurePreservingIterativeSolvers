@@ -87,4 +87,6 @@ def convergence_plot(vis_out,
 
     plt.savefig(filename)
 
+    print('Figure saved as %s' % filename)
+
     return -1

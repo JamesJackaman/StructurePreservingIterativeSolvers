@@ -109,7 +109,7 @@ def DeviationPlotter(tol=1e-6,
     
     plt.savefig(filename)
 
-    print('Figure has been successfully as %s' % filename)
+    print('Figure saved as %s' % filename)
 
     return None
     

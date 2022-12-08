@@ -107,6 +107,7 @@ def convergence_plot(vis_out,
 
     os.chdir('../') #Move to parent directory before saving
     plt.savefig(filename)
+    print('Figure saved as %s' % filename)
 
     return -1
 
