@@ -1,15 +1,15 @@
 # Solvers
 
-Here we describe the functions in `solvers.py`. The script is comprised of three functions. The first is an implementation of GMRES, the second an implementation of CGMRES and the final an implementation of prototypical CGMRES. Throughout, we are solving
+Here we describe the functions in `solvers.py`. The script is comprised of three functions. The first is an implementation of FGMRES, the second an implementation of CGMRES, and the final a prototypical implementation of CGMRES (where more constraints are enforced each iteration). Throughout, we are solving
 ```math
 A {\bf x} = {\bf b}
 ,
 ````
 subject to some list of (non)linear constraints `conlist`.
 
-## GMRES
+## FGMRES
 
-The GMRES implementation here is right preconditioned. It has been hand-coded in a consistent way with CGMRES to allow for a fair comparison.
+The FGMRES implementation here is right preconditioned. It has been hand-coded in a consistent way with CGMRES to allow for a fair comparison.
 
 ### Input
 
@@ -25,13 +25,13 @@ The GMRES implementation here is right preconditioned. It has been hand-coded in
 - A dictionary containing:
 - - The name of the algorithm.
   - The approximation of `x` at every iteration.
-  - The residual `r = Ax - b` at every iteration.
+  - The residual `r = Ax - b` at every iteration (without the initial residual).
 
 ## CGMRES
 
-The inputs and outputs of CGMRES contain those of GMRES. To avoid unnecessary exposition we shall not repeat these but only list additional contributions.
+The inputs and outputs of CGMRES contain those of FGMRES. To avoid unnecessary exposition we shall not repeat these but only list additional contributions.
 
-Here we use GMRES up to some user-specified tolerance `contol * tol`, and below this enforce constraints via a trust region method. If, for any reason, the constraint is not successfully enforced, the algorithm will not terminate (unless the maximum number of iterations `k` has been reached). If the constrained solve fails, which is possible when there is insufficient freedom in the Krylov space and the problem becomes overdetermined, GMRES will be used and the algorithm will not terminate. 
+Here we use GMRES up to some user-specified tolerance `contol * tol`, and below this enforce constraints via a trust region method. If, for any reason, the constraint is not successfully enforced, the algorithm will not terminate (unless the maximum number of iterations `k` has been reached). If the constrained solve fails, which is possible when there is insufficient freedom in the Krylov space and the problem becomes overdetermined, FGMRES will be used and the algorithm will not terminate.
 
 ### Additional inputs
 
@@ -41,9 +41,9 @@ Here we use GMRES up to some user-specified tolerance `contol * tol`, and below 
 
 ## Prototypical CGMRES
 
-As with CGMRES, the inputs and outputs are similar to GMRES so we just introduce any differences here. This algorithm, given by the function `cgmres_p`, is used for testing how difficult it is to enforce constraints and follows the following procedure:
+As with CGMRES, the inputs and outputs are similar to FGMRES so we just introduce any differences here. This algorithm, given by the function `cgmres_p`, is used for testing how difficult it is to enforce constraints and follows the following procedure:
 
-1. For the first iteration, GMRES is used.
+1. For the first iteration, FGMRES is used.
 2. For the second iteration, CGMRES is used enforcing the first constraint.
 3. For the third iteration, CGMRES is used enforcing the first two constraints.
 4. This continues until all constraints are enforced.

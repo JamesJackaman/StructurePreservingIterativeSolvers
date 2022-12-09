@@ -6,13 +6,13 @@ Here we describe the functionality of python files we use in the examples.
 
 ### Functionality
 
-Solves a single step for a given problem for CGMRES, GMRES and exact linear solvers. The relative error is compared against the exact linear solver and enforcement of the constraints is checked. The auxiliary file `visualise.py` is then typically used to study the deviation in invariants at each iteration and to plot this graphically. 
+Solves a single step for a given problem for prototypical CGMRES, FGMRES and exact linear solvers. The relative error is compared against the exact linear solver and enforcement of the constraints is checked. The auxiliary file `visualise.py` is then typically used to study the deviation in invariants at each iteration and to plot this graphically. 
 
 ## Evolve.py
 
 ### Functionality
 
-Generates the solution over all time steps using a specfied linear solver. When executing this file two runs will be performed with GMRES and CGMRES, and then plotted.
+Generates the solution over all time steps using a specfied linear solver. When executing this file two runs will be performed with FGMRES and CGMRES, and then plotted.
 
 ### Input
 
@@ -106,7 +106,7 @@ Here the parameters of the discretisation are defined, in addition to defining t
 - `M` # spatial elements.
 -  `degree`: Spatial finite element degree.
 -  `T`: End time.
--  and optionally `tstages` (optional) stages in RK method.
+-   `tstages` _(optional)_ Stages in RK method.
 
 #### Attributes
 
@@ -137,6 +137,7 @@ Takes a solution vector and computes the value of quantities which should be inv
 
 - `prob`: The problem class
 - `uvec`: A solution vector corresponding to a finite element function
+- `uold`: _(optional)_ Solution vector at the previous time / initial condition, only required for heat equation as energy dissipates (and depends on previous energy).
 
 #### Output
 
@@ -177,13 +178,13 @@ A function specific to [Runge-Kutta temporal discretisations](../README.md#runge
 
 ### Functionality
 
-Wrapper for the [linear solvers](docs/solvers.md) incorporating problem specific information (constraints) for CGMRES. GMRES and/or exact linear solvers do not need to be wrapped, this is done so the functions may be called in the same way.
+Wrapper for the [linear solvers](solvers.md) incorporating problem specific information (constraints) for CGMRES. FGMRES and/or exact linear solvers do not need to be wrapped, this is done so the functions may be called in the same way.
 
-When utilising CGMRES, if the solver tolerance is set to be far below machine precision the solver defaults to a prototypical one which enforces constraints one-by-one. If the tolerance is reasonable the constraints are enforced near convergence.
+When utilising CGMRES, if the solver tolerance is set to be far below machine precision (`1e-20`) the solver defaults to a [prototypical](solvers.md#prototypical-cgmres) one which enforces constraints one-by-one. If the tolerance is reasonable a more [practical algorithm](solvers.md#cgmres) is used and the constraints are enforced near convergence.
 
 ### Input
 
-`dic`: A python dictionary generated in [SelfTitled.py](docs/SelfTitled.md) containing the linear system and the vectors and matrices needed to form the constraints.
+`dic`: A python dictionary generated in [SelfTitled.py](#SelfTitled.py) containing the linear system and the vectors and matrices needed to form the constraints.
 
 `x0`: An initial guess for the solvers.
 
@@ -199,4 +200,4 @@ When utilising CGMRES, if the solver tolerance is set to be far below machine pr
 
 ### Output
 
-The same as the output of the linear solver in [solvers.py](docs/solvers.md). The first output is the solution given by the algorithm, while the second is a dictionary containing auxiliary information used in other components of the code. 
+The same as the output of the linear solver in [solvers.py](solvers.md). The first output is the solution given by the algorithm, while the second is a dictionary containing auxiliary information used in other components of the code. 

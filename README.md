@@ -1,18 +1,18 @@
 # Structure preserving iterative linear solvers
 
-**This repository is a suppliment to _“Preconditioned Krylov solvers for structure-preserving discretisations” by Jackaman and Maclachlan_, and contains a conservative GMRES implementation in addition to experiments for various constrained linear systems.**
+**This repository is a suppliment to _“Preconditioned Krylov solvers for structure-preserving discretisations” by Jackaman and MacLachlan_, and contains a conservative GMRES implementation in addition to experiments for various constrained linear systems.**
 
 ## Installation
 
 ### Install the latest version of all components
 
-This repository requires [Firedrake](https://www.firedrakeproject.org/) and [Irksome](https://firedrakeproject.github.io/Irksome). The Firedrake install script can be downloaded [here](https://www.firedrakeproject.org/download.html), and can be installed (with Irksome) into a new virtual envionrment with `python3 firedrake-install --install irksome`. Irksome is only a requirement for the [Linear KdV equation with RK temporal discretisation](#runge-kutta-in-time).
+This repository requires [Firedrake](https://www.firedrakeproject.org/) and [Irksome](https://firedrakeproject.github.io/Irksome). The Firedrake install script can be downloaded [here](https://www.firedrakeproject.org/download.html), and can be installed (with Irksome) into a new virtual envionrment with `python3 firedrake-install --install irksome`. Irksome is only a requirement for the [linear KdV equation with RK temporal discretisation](#runge-kutta-in-time).
 
 ### Install a stable version of all components
 
 This repository is not intended to maintain future compatibility with its dependencies, as this may effect the reproducabilty of results displayed here. To install a stable version of the code we recommend the following.
 
-1. To install a stable version of Firedrake into a new virtual environment use `python3 firedrake-install 10.5281/zenodo.7414962`. This will install the version used in the associated paper. 
+1. Install a stable version of Firedrake into a new virtual environment via the Firedrake install script with `python3 firedrake-install 10.5281/zenodo.7414962`. This will install the version used in the associated paper. 
    - The Zenodo URL can be found [here](https://zenodo.org/record/7414962).
    - The DOI is 10.5281/zenodo.7414962.
    - The tag in the [Firedrake repo](https://github.com/firedrakeproject/firedrake) is `Firedrake_20221208.0`. 
@@ -24,7 +24,7 @@ Before using this code it is recommended to run `setup.py` inside the virtual en
 
 ## What is CGMRES?
 
-CGMRES is a constrained GMRES algorithm, where before termination a list of user-specified constraints are enforced, the core functionality is described in more detail in **[here](docs/solvers.md)**. 
+CGMRES is a constrained FGMRES algorithm, where before termination a list of user-specified constraints are enforced, the core functionality is described in more detail in **[here](docs/solvers.md)**. 
 
 ## Application of CGMRES to test problems
 
