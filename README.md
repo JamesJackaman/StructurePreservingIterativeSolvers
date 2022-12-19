@@ -1,6 +1,6 @@
 # Structure preserving iterative linear solvers
 
-**This repository is a suppliment to _“Preconditioned Krylov solvers for structure-preserving discretisations” by Jackaman and MacLachlan_, and contains a conservative GMRES implementation in addition to experiments for various constrained linear systems.**
+**This repository is a suppliment to _[“Preconditioned Krylov solvers for structure-preserving discretisations”](https://doi.org/10.48550/arXiv.2212.05127)_, and contains a conservative GMRES implementation in addition to experiments for various constrained linear systems.**
 
 ## Installation
 
