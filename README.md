@@ -84,7 +84,9 @@ These experiments can be found in lkdvRK.
 
 We approximate the solution of 
 ```math
-{\bf u}_t + f {\bf u}^{\perp} + c^2 \nabla\rho = 0 \\
+{\bf u}_t + f {\bf u}^{\perp} + c^2 \nabla\rho = 0
+```
+```math
 \rho_t + \nabla \cdot {\bf u} = 0, 
 ```
 where $f$ and $c$ are constants, and
