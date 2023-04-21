@@ -5,6 +5,7 @@ Linear system set up and other lkdv specific functions
 from firedrake import *
 import numpy as np
 import matplotlib.pylab as plt
+import scipy as sp
 
 #local
 import refd
@@ -105,15 +106,18 @@ def linforms(N=100,M=50,degree=1,T=1,space='DG',zinit=None):
 
     
     #Read out A and b
-    A = assemble(lhs(F),mat_type='aij').M.values
+    A = assemble(lhs(F),mat_type='aij').M.handle.getValuesCSR()
+    A = sp.sparse.csr_matrix((A[2],A[1],A[0]))
     b = np.asarray(assemble(rhs(F)).dat.data).reshape(-1)
 
     #Get form for mass matrix
     M_form = u_trial * phi * dx
-    M = assemble(lhs(M_form),mat_type='aij').M.values
+    M = assemble(lhs(M_form),mat_type='aij').M.handle.getValuesCSR()
+    M = sp.sparse.csr_matrix((M[2],M[1],M[0]))
     #And for L
     L_form = w_trial * chi * dx
-    L = assemble(lhs(L_form),mat_type='aij').M.values
+    L = assemble(lhs(L_form),mat_type='aij').M.handle.getValuesCSR()
+    L = sp.sparse.csr_matrix((L[2],L[1],L[0]))
     #And the vector needed for finding the mass
     omega = np.asarray(assemble(phi * dx).dat.data).reshape(-1)
 

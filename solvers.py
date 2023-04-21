@@ -9,10 +9,14 @@ import matplotlib.pylab as plt
 import scipy.sparse as sps
 import scipy.optimize as spo
 import warnings
+from time import time
 
 #FGMRES implementation, hand implemented for a fair comparison
-def gmres(A, b, x0, k, tol = 1e-50, pre = None):
-
+def gmres(A, b, x0, k, tol = 1e-50, pre = None, timing=None):
+    #Start timing
+    if timing:
+        t_start = time()
+        
     #If not using preconditioner, set up identity as placeholder
     if pre is None:
         pre = sps.identity(len(b))
@@ -43,7 +47,9 @@ def gmres(A, b, x0, k, tol = 1e-50, pre = None):
     q[0] = r / beta #normalise r0
     
     h = np.zeros((k+1,k))
-    
+
+    if timing:
+        t_iter_start = time() 
     for j in range(k):
         steps = j+1
         y = np.asarray(A @ prefunc(q[j]))
@@ -66,14 +72,25 @@ def gmres(A, b, x0, k, tol = 1e-50, pre = None):
         
         x.append(prefunc(np.transpose(q[:j+1,:])) @ yk + x0)
         residual.append(np.linalg.norm(A.dot(x[-1]) - b))
+        if timing:
+            t_iter = (time() - t_iter_start) / steps
         if residual[-1] < tol:
             break
+
+    #Report timings
+    if timing:
+        t_end = time()
+        timings = {'runtime': t_end - t_start,
+                   'iter_time': t_iter}
+    else:
+        timings = {}
 
     #Build output dictionary
     dict = {'name': 'gmres',
             'x':x,
             'res':residual[1:],
-            'steps': steps}
+            'steps': steps,
+            'timings': timings}
     
     return x[-1], dict
 
@@ -83,8 +100,12 @@ def cgmres(A, b ,x0, k,
            tol=1e-8,
            contol=10,#contol*tol is when constraints are first enforced
            conlist=[],
-           pre = None):
+           pre = None,
+           timing = None):
 
+    if timing:
+        t_start = time()
+    
     ctol = 1e-12 #specify the tolerance to which constraints *must* be
                  #enforced
     
@@ -122,6 +143,9 @@ def cgmres(A, b ,x0, k,
     
     h = np.zeros((k+1,k))
 
+    if timing:
+        t_iter_start = time()
+        constrained_steps = 0
     for j in range(k):
         steps = j+1
         y = np.asarray(A @ prefunc(q[j]))
@@ -204,6 +228,7 @@ def cgmres(A, b ,x0, k,
 
         else:
             try:
+                constrained_steps += 1 #Add a constrained step
                 solve = spo.minimize(func,y0,tol=None,jac=jac,hess=hess,
                                      constraints=clist[:],
                                      method='trust-constr',
@@ -241,15 +266,36 @@ def cgmres(A, b ,x0, k,
         #Compute residual
         residual.append(np.linalg.norm(A.dot(x[-1]) - b))
 
+        #Measure iteration time
+        if timing:
+            #Unconstrained timing
+            if constrained_steps==0:
+                t_iter_unconstrained = (time() - t_iter_start) / steps
+                t_iter_start_constrained = time()
+            else:
+                t_iter_constrained = (time() - t_iter_start_constrained) / constrained_steps
+                
+            
+
         if residual[-1] < tol and safety==True:
             break
 
+    #Report timings
+    if timing:
+        t_end = time()
+        timings = {'runtime': t_end-t_start,
+                   'iter_time_unconstrained': t_iter_unconstrained,
+                   'iter_time_constrained': t_iter_constrained,
+                   'constrained_steps': constrained_steps}
+    else:
+        timings = {}
 
     #build output dictionary
     dict = {'name':'cgmres',
             'x': x,
             'res': residual[1:],
-            'steps': steps}
+            'steps': steps,
+            'timings': timings}
 
     return x[-1], dict
 
