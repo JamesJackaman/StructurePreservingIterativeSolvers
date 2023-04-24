@@ -13,7 +13,7 @@ import sys
 sys.path.insert(0,'../')
 import solvers
 
-def cgmresWrapper(dic,x0,k,tol=1e-50,contol=10):
+def cgmresWrapper(dic,x0,k,tol=1e-50,contol=10,timing=None):
 
     A = dic['A']
     b = dic['b']
@@ -48,15 +48,17 @@ def cgmresWrapper(dic,x0,k,tol=1e-50,contol=10):
     #If tolerance is not crazy small, use the cgmres with a tolerance
     if tol>1e-20:
         out = solvers.cgmres(A=A,b=b,x0=x0,k=k,tol=tol,contol=contol,
-                      conlist=conlist)
+                             conlist=conlist,timing=timing)
     #If tolerance is set to be unrealistically small, use prototypical
     #CGMRES to enforce constraints one-by-one
     else:
+        if timing!=None:
+            raise NotImplementedError('Timings are not available for prototypical solver')
         out = solvers.cgmres_p(A=A,b=b,x0=x0,k=k,
                              conlist=conlist)
     return out
 
-def gmresWrapper(dic,x0,k,tol=1e-50,contol=None):
+def gmresWrapper(dic,x0,k,tol=1e-50,contol=None,timing=None):
 
     if contol!=None:
         warnings.warn('Contol is ignored as not used in GMRES')
@@ -64,7 +66,7 @@ def gmresWrapper(dic,x0,k,tol=1e-50,contol=None):
     A = dic['A']
     b = dic['b']
     
-    out = solvers.gmres(A=A,b=b,x0=x0,k=k,tol=tol)
+    out = solvers.gmres(A=A,b=b,x0=x0,k=k,tol=tol,timing=timing)
     
     return out
 
