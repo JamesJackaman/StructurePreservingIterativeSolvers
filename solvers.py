@@ -217,7 +217,7 @@ def cgmres(A, b ,x0, k,
             y0[:-1] = yk
             
         #For the first iterations use gmres
-        if residual[-1]>contol*tol and j<k:
+        if residual[-1]>contol*tol and j<k-1:
             solve = spo.minimize(func,y0,tol=None,jac=jac,hess=hess,
                                  constraints=[],
                                  method='trust-constr',
@@ -227,8 +227,8 @@ def cgmres(A, b ,x0, k,
                                           'maxiter': 1e3})
 
         else:
+            constrained_steps += 1 #Add a constrained step
             try:
-                constrained_steps += 1 #Add a constrained step
                 solve = spo.minimize(func,y0,tol=None,jac=jac,hess=hess,
                                      constraints=clist[:],
                                      method='trust-constr',
@@ -272,10 +272,9 @@ def cgmres(A, b ,x0, k,
             if constrained_steps==0:
                 t_iter_unconstrained = (time() - t_iter_start) / steps
                 t_iter_start_constrained = time()
+            #Constrained timing
             else:
                 t_iter_constrained = (time() - t_iter_start_constrained) / constrained_steps
-                
-            
 
         if residual[-1] < tol and safety==True:
             break
