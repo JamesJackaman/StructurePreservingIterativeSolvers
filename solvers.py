@@ -105,9 +105,10 @@ def cgmres(A, b ,x0, k,
 
     if timing:
         t_start = time()
-    
-    ctol = 1e-12 #specify the tolerance to which constraints *must* be
-                 #enforced
+        ctol = 1e-10 #Lower constraint tolerance for speed
+    else:
+        ctol = 1e-12 #specify the tolerance to which constraints
+                     #*must* be enforced
     
     #If not using preconditioner, set up identity as placeholder
     if pre is None:
@@ -235,7 +236,7 @@ def cgmres(A, b ,x0, k,
                                      options={'xtol': ctol,
                                               'gtol': ctol,
                                               'barrier_tol': ctol,
-                                              'maxiter': 1e4})
+                                              'maxiter': 1e3})
                 safety = True
                 #If constraints are violated, turn off safety to avoid
                 #possible termination on next iteration

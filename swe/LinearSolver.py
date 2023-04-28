@@ -9,7 +9,7 @@ import sys
 sys.path.insert(0,'../')
 import solvers
 
-def cgmresWrapper(dic,x0,k,tol=1e-50):
+def cgmresWrapper(dic,x0,k,tol=1e-50,pre=None,timing=None):
 
     A = dic['A']
     b = dic['b']
@@ -38,18 +38,20 @@ def cgmresWrapper(dic,x0,k,tol=1e-50):
     #algorithm to enforce constraints one-by-one
     if tol<1e-20:
         out = solvers.cgmres_p(A=A,b=b,x0=x0,k=k,
-                               conlist=conlist)
+                               conlist=conlist,
+                               pre=pre)
     #Otherwise use algorithm with tolerance
     else:
         out = solvers.cgmres(A=A,b=b,x0=x0,k=k,tol=tol,
-                             conlist=conlist)
+                             conlist=conlist,timing=timing,
+                             pre=pre)
     return out
 
 
-def gmresWrapper(dic,x0,k,tol=1e-50):
+def gmresWrapper(dic,x0,k,tol=1e-50,pre=None,timing=None):
     A = dic['A']
     b = dic['b']
     
-    out = solvers.gmres(A=A,b=b,x0=x0,k=k,tol=tol)
+    out = solvers.gmres(A=A,b=b,x0=x0,k=k,tol=tol,pre=pre,timing=timing)
     
     return out
