@@ -11,6 +11,12 @@ import scipy.optimize as spo
 import warnings
 from time import time
 
+def constraint_checker(x,x0,Z,const_list):
+    dev = 0
+    for const in const_list:
+        dev = max(dev, const['fun'](x,x0,Z))
+    return dev
+
 #FGMRES implementation, hand implemented for a fair comparison
 def gmres(A, b, x0, k, tol = 1e-50, pre = None, timing=None):
     #Start timing
@@ -135,6 +141,7 @@ def cgmres(A, b ,x0, k,
     residual.append(np.linalg.norm(r))
          
     q = np.zeros((k+1,np.size(r)))
+    z = np.zeros((k+1,np.size(r)))
 
     beta = np.linalg.norm(r)
     
@@ -149,7 +156,8 @@ def cgmres(A, b ,x0, k,
         constrained_steps = 0
     for j in range(k):
         steps = j+1
-        y = np.asarray(A @ prefunc(q[j]))
+        z[j] = np.asarray(prefunc(q[j]))
+        y = np.asarray(A @ z[j])
         
         for i in range(j+1):
             h[i,j] = np.dot(q[i],y)
@@ -164,9 +172,9 @@ def cgmres(A, b ,x0, k,
 
         res = np.zeros(j+2)
         res[0] = beta
-
-        Q = np.transpose(q[:j+1,:]) #Allocate current size of Q
-        Qt = np.transpose(Q)
+        
+        Z = np.transpose(z[:j+1,:]) #Allocate current size of Z
+        
 
         #Set up function
         def func(z):
@@ -208,8 +216,9 @@ def cgmres(A, b ,x0, k,
         clist = []
         for const in conlist:
             clist.append({"type": "eq",
-                          "fun": const,
-                          "args": (x0,prefunc(Q))})
+                          "fun": const['const'],
+                          "jac": const['jac'],
+                          "args": (x0,Z)})
 
 
         #Initialise guess
@@ -221,38 +230,36 @@ def cgmres(A, b ,x0, k,
         if residual[-1]>contol*tol and j<k-1:
             solve = spo.minimize(func,y0,tol=None,jac=jac,hess=hess,
                                  constraints=[],
-                                 method='trust-constr',
-                                 options={'xtol': 1e-12,
-                                          'gtol': 1e-12,
-                                          'barrier_tol': 1e-12,
+                                 method='SLSQP',
+                                 options={'ftol': ctol,
                                           'maxiter': 1e3})
 
         else:
-            constrained_steps += 1 #Add a constrained step
             try:
-                solve = spo.minimize(func,y0,tol=None,jac=jac,hess=hess,
+                if timing:
+                    constrained_steps += 1 #Add a constrained step
+
+                solve = spo.minimize(func,y0,tol=ctol,jac=jac,hess=hess,
                                      constraints=clist[:],
-                                     method='trust-constr',
-                                     options={'xtol': ctol,
-                                              'gtol': ctol,
-                                              'barrier_tol': ctol,
+                                     method='SLSQP',
+                                     options={'ftol': ctol,
                                               'maxiter': 1e3})
+                
                 safety = True
-                #If constraints are violated, turn off safety to avoid
-                #possible termination on next iteration
-                if solve.constr_violation>ctol:
+                
+                # If constraints are violated, turn off safety to avoid
+                # possible termination on next iteration
+                if constraint_checker(solve.x,x0,Z,clist)>ctol:
                     safety = False
                     warnings.warn("Iteration %d failed to preserve constraints with deviation of %e" % (j,solve.constr_violation),
-                                  RuntimeWarning)
+                                  RuntimeWarning)                    
             except:
                 warning('Constrained solve failed, defaulted to standard solve for iteration %d.' % j \
                         + ' Problem likely overconstrained, a smaller solver tolerance may be required.')
                 solve = spo.minimize(func,y0,tol=None,jac=jac,hess=hess,
                                      constraints=[],
-                                     method='trust-constr',
-                                     options={'xtol': 1e-12,
-                                              'gtol': 1e-12,
-                                              'barrier_tol': 1e-12,
+                                     method='SLSQP',
+                                     options={'ftol': 1e-12,
                                               'maxiter': 1e3})
                 
         if solve.message!='Optimization terminated successfully':
@@ -262,7 +269,7 @@ def cgmres(A, b ,x0, k,
                                   RuntimeWarning)
         yk = solve.x
         
-        x.append(prefunc(Q) @ yk + x0)
+        x.append(Z @ yk + x0)
 
         #Compute residual
         residual.append(np.linalg.norm(A.dot(x[-1]) - b))
