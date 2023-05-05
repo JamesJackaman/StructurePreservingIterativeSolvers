@@ -176,41 +176,16 @@ def cgmres(A, b ,x0, k,
         Z = np.transpose(z[:j+1,:]) #Allocate current size of Z
         
 
-        #Set up function
+        #Set up function and jacobian
         def func(z):
             F = res - h[:j+2,:j+1] @ z
             out = np.inner(F,F)
             return out
 
         def jac(z):
-            out = np.zeros_like(z)
-
-            #original term
             F = res - h[:j+2,:j+1] @ z
-            #Component wise differentiation of F
-            for m in range(len(z)):
-                ej = np.zeros_like(z)
-                ej[m] = 1 
-                dF = - h[:j+2,:j+1] @ ej
-
-                #assemble j-th component of jac
-                out[m] = 2 * np.inner(dF,F)
-                
-            return out
-
-        def hess(z):
-            dim = len(z)
-            out = np.zeros((dim,dim))
-            for n in range(dim):
-                for m in range(dim):
-                    e1 = np.zeros_like(z)
-                    e1[n] = 1
-                    e2 = np.zeros_like(z)
-                    e2[m] = 1
-                    #assemble n,m-th component of hessian
-                    out[n,m] = 2 * np.inner( h[:j+2,:j+1] @ e1, h[:j+2,:j+1] @ e2)
-
-            return out
+            Ht = np.transpose(h[:j+2,:j+1])
+            return -2 * Ht @ F
         
         #Add constraints
         clist = []
@@ -228,7 +203,7 @@ def cgmres(A, b ,x0, k,
             
         #For the first iterations use gmres
         if residual[-1]>contol*tol and j<k-1:
-            solve = spo.minimize(func,y0,tol=None,jac=jac,hess=hess,
+            solve = spo.minimize(func,y0,tol=None,jac=jac,
                                  constraints=[],
                                  method='SLSQP',
                                  options={'ftol': ctol,
@@ -239,7 +214,7 @@ def cgmres(A, b ,x0, k,
                 if timing:
                     constrained_steps += 1 #Add a constrained step
 
-                solve = spo.minimize(func,y0,tol=ctol,jac=jac,hess=hess,
+                solve = spo.minimize(func,y0,tol=None,jac=jac,
                                      constraints=clist[:],
                                      method='SLSQP',
                                      options={'ftol': ctol,
@@ -252,11 +227,11 @@ def cgmres(A, b ,x0, k,
                 if constraint_checker(solve.x,x0,Z,clist)>ctol:
                     safety = False
                     warnings.warn("Iteration %d failed to preserve constraints with deviation of %e" % (j,solve.constr_violation),
-                                  RuntimeWarning)                    
+                                  RuntimeWarning)       
             except:
                 warning('Constrained solve failed, defaulted to standard solve for iteration %d.' % j \
                         + ' Problem likely overconstrained, a smaller solver tolerance may be required.')
-                solve = spo.minimize(func,y0,tol=None,jac=jac,hess=hess,
+                solve = spo.minimize(func,y0,tol=None,jac=jac,
                                      constraints=[],
                                      method='SLSQP',
                                      options={'ftol': 1e-12,
@@ -364,47 +339,23 @@ def cgmres_p(A, b ,x0, k,
         Q = np.transpose(q[:j+1,:]) #Allocate current size of Q
         Qt = np.transpose(Q)
 
-        #Set up function
+        #Set up function and jacobian
         def func(z):
             F = res - h[:j+2,:j+1] @ z
-            out = np.inner(F,F)
-            return out
+            return np.inner(F,F)
 
         def jac(z):
-            out = np.zeros_like(z)
-
-            #original term
             F = res - h[:j+2,:j+1] @ z
-            #Component wise differentiation of F
-            for m in range(len(z)):
-                ej = np.zeros_like(z)
-                ej[m] = 1 
-                dF = - h[:j+2,:j+1] @ ej
+            Ht = np.transpose(h[:j+2,:j+1])
+            return -2 * Ht @ F
 
-                #assemble j-th component of jac
-                out[m] = 2 * np.inner(dF,F)
-                
-            return out
-
-        def hess(z):
-            dim = len(z)
-            out = np.zeros((dim,dim))
-            for n in range(dim):
-                for m in range(dim):
-                    e1 = np.zeros_like(z)
-                    e1[n] = 1
-                    e2 = np.zeros_like(z)
-                    e2[m] = 1
-                    #assemble n,m-th component of hessian
-                    out[n,m] = 2 * np.inner( h[:j+2,:j+1] @ e1, h[:j+2,:j+1] @ e2)
-
-            return out
         
         #Add constraints
         clist = []
         for const in conlist:
             clist.append({"type": "eq",
-                          "fun": const,
+                          "fun": const['const'],
+                          "jac": const['jac'],
                           "args": (x0,prefunc(Q))})
 
 
@@ -415,12 +366,10 @@ def cgmres_p(A, b ,x0, k,
 
 
         #For the first iteration just use gmres
-        solve = spo.minimize(func,y0,tol=tol,jac=jac,hess=hess,
+        solve = spo.minimize(func,y0,tol=None,jac=jac,
                              constraints=clist[:j],
-                             method='trust-constr',
-                             options={'xtol': 1e-12,
-                                      'gtol': 1e-12,
-                                      'barrier_tol': 1e-12,
+                             method='SLSQP',
+                             options={'ftol': 1e-12,
                                       'maxiter': 1e3})
 
 
