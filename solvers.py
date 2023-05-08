@@ -111,7 +111,7 @@ def cgmres(A, b ,x0, k,
 
     if timing:
         t_start = time()
-        ctol = 1e-10 #Lower constraint tolerance for speed
+        ctol = 1e-5 #Lower constraint tolerance for speed
     else:
         ctol = 1e-12 #specify the tolerance to which constraints
                      #*must* be enforced
@@ -206,7 +206,7 @@ def cgmres(A, b ,x0, k,
             solve = spo.minimize(func,y0,tol=None,jac=jac,
                                  constraints=[],
                                  method='SLSQP',
-                                 options={'ftol': ctol,
+                                 options={'ftol': ctol**2,
                                           'maxiter': 1e3})
 
         else:
@@ -217,28 +217,30 @@ def cgmres(A, b ,x0, k,
                 solve = spo.minimize(func,y0,tol=None,jac=jac,
                                      constraints=clist[:],
                                      method='SLSQP',
-                                     options={'ftol': ctol,
+                                     options={'ftol': ctol**2,
                                               'maxiter': 1e3})
 
                 #check if constrained solver has silently failed
-                if np.isnan(max(solve.x)):
-                    raise ValueError
+                if not timing:
+                    if np.isnan(max(solve.x)):
+                        raise ValueError
                 
                 safety = True
-                
+
                 # If constraints are violated, turn off safety to avoid
-                # possible termination on next iteration
-                if constraint_checker(solve.x,x0,Z,clist)>ctol:
-                    safety = False
-                    warnings.warn("Iteration %d failed to preserve constraints with deviation of %e" % (j,solve.constr_violation),
-                                  RuntimeWarning)       
+                # possible termination on next iteration (slow so avoid when timing)
+                if not timing:
+                    if constraint_checker(solve.x,x0,Z,clist)>ctol:
+                        safety = False
+                        warnings.warn("Iteration %d failed to preserve constraints with deviation of %e" % (j,solve.constr_violation),
+                                      RuntimeWarning)
             except:
                 warning('Constrained solve failed, defaulted to standard solve for iteration %d.' % j \
                         + ' Problem likely overconstrained, a smaller solver tolerance may be required.')
                 solve = spo.minimize(func,y0,tol=None,jac=jac,
                                      constraints=[],
                                      method='SLSQP',
-                                     options={'ftol': 1e-12,
+                                     options={'ftol': ctol**2,
                                               'maxiter': 1e3})
                 
         if solve.message!='Optimization terminated successfully':
@@ -369,10 +371,10 @@ def cgmres_p(A, b ,x0, k,
 
 
         #Try prototypical solver
-        solve = spo.minimize(func,y0,tol=None,jac=jac,
+        solve = spo.minimize(func,y0,tol=1e-15,jac=jac,
                              constraints=clist[:j],
                              method='SLSQP',
-                             options={'ftol': 1e-12,
+                             options={'ftol': 1e-20,
                                       'maxiter': 1e3})
 
         #If solve failed, default to an uncontrained solve
@@ -381,7 +383,7 @@ def cgmres_p(A, b ,x0, k,
             solve = spo.minimize(func,y0,tol=None,jac=jac,
                                  constraints=[],
                                  method='SLSQP',
-                                 options={'ftol': 1e-12,
+                                 options={'ftol': 1e-20,
                                           'maxiter': 1e3})
             
 
