@@ -9,7 +9,7 @@ import sys
 sys.path.insert(0,'../')
 import solvers
 
-def cgmresWrapper(dic,x0,k,tol=1e-50,pre=None):
+def cgmresWrapper(dic,x0,k,tol=1e-50,pre=None,timing=None):
 
     A = dic['A']
     b = dic['b']
@@ -40,14 +40,14 @@ def cgmresWrapper(dic,x0,k,tol=1e-50,pre=None):
     def jac_energy(z,x0,Q):#Depends on x0 and Q
         X = x0 + Q @ z
         dX = Q
-        out = X @ M @ dX + 0.5 * dt * X @ L @ dX# \
-            #+ 0.5 * dt * Lz0 @ dX
+        out = X @ M @ dX + 0.5 * dt * X @ L @ dX \
+            + 0.5 * dt * Lz0 @ dX
         return out
 
     mass = {'const': const_mass,
             'jac': jac_mass}
     energy = {'const': const_energy,
-              'jac': None}
+              'jac': jac_energy}
     
 
     #And stuff them in a list
@@ -58,20 +58,22 @@ def cgmresWrapper(dic,x0,k,tol=1e-50,pre=None):
     #here.
     if tol<1e-20:
         out = solvers.cgmres_p(A=A,b=b,x0=x0,k=k,
-                              conlist=conlist,
-                              pre=pre)
+                               conlist=conlist,
+                               pre=pre)
     else:
         out = solvers.cgmres(A=A,b=b,x0=x0,k=k,
-                            tol=tol,conlist=conlist,
-                            pre=pre)
+                             tol=tol,conlist=conlist,
+                             pre=pre,
+                             timing=timing)
     return out
 
 
-def gmresWrapper(dic,x0,k,tol=1e-50,pre=None):
+def gmresWrapper(dic,x0,k,tol=1e-50,pre=None,timing=None):
     #there are no constraints, so ctol does not make sense here
     A = dic['A']
     b = dic['b']
     
-    out = solvers.gmres(A=A,b=b,x0=x0,k=k,tol=tol,pre=pre)
+    out = solvers.gmres(A=A,b=b,x0=x0,k=k,tol=tol,
+                        pre=pre,timing=timing)
     
     return out
