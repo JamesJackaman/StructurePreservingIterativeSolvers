@@ -47,8 +47,36 @@ def cgmresWrapper(dic,x0,k,prob=None,pre=None,
             - e0
         return out
 
-    #And stuff them in a list
-    conlist = [const1,const2,const3]
+    def jac1(z,x0,Q):
+        dX = lkdvRK.dz1calc(prob, Q, z0)
+        return np.transpose(omega) @ dX
+
+    def jac2(z,x0,Q):
+        X = x0 + Q @ z
+        X = lkdvRK.z1calc(prob, X, z0)
+        dX = lkdvRK.dz1calc(prob, Q, z0)
+        out = np.transpose(X) @ M @ dX
+        return out
+    
+    def jac3(z,x0,Q):
+        X = x0 + Q @ z
+        X = lkdvRK.z1calc(prob, X, z0)
+        dX = lkdvRK.dz1calc(prob, Q, z0)
+        out = np.transpose(X) @ L @ dX \
+            - np.transpose(X) @ M @ dX
+        return out
+    
+    mass = {'const': const1,
+            'jac': jac1}
+
+    momentum = {'const': const2,
+                'jac': jac2}
+
+    energy = {'const': const3,
+              'jac': jac3}
+        
+    #And stuff them in an ordered list
+    conlist = [mass,momentum,energy]
 
     #If tolerance is not very crazy small, use cgmres with a tolerance
     if tol>1e-20:

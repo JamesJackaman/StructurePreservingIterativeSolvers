@@ -173,6 +173,21 @@ def z1calc(prob,zbig,z0):
 
     return z1
 
+#A function to reconstruct the derivative of z1 w.r.t z as defined in
+#the constraints in LinearSolver.py
+def dz1calc(prob,Q,z0):
+    dt = prob.dt #timestep
+    b = prob.butcher_tableau.b
+    ns = prob.ns #num of stages
+    dof = len(z0) #dof of space
+
+    #Reconstruct solution Jacobian at z1
+    dz1 = np.zeros((len(z0),np.shape(Q)[-1]))
+    for s in range(ns):
+        dz1 += dt * b[s] * Q[s*dof:(s+1)*dof,:]
+        
+    return dz1
+
 #Computes values of invariants given a vector zbig
 def compute_invariants(params,prob,zbig):
 
