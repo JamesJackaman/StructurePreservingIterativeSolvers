@@ -219,6 +219,10 @@ def cgmres(A, b ,x0, k,
                                      method='SLSQP',
                                      options={'ftol': ctol,
                                               'maxiter': 1e3})
+
+                #check if constrained solver has silently failed
+                if np.isnan(max(solve.x)):
+                    raise ValueError
                 
                 safety = True
                 
@@ -311,7 +315,6 @@ def cgmres_p(A, b ,x0, k,
     r = (b - A.dot(x0)) #define r0
 
     x.append(r)
-
          
     q = np.zeros((k+1,np.size(r)))
 
@@ -365,13 +368,22 @@ def cgmres_p(A, b ,x0, k,
             y0[:-1] = yk
 
 
-        #For the first iteration just use gmres
+        #Try prototypical solver
         solve = spo.minimize(func,y0,tol=None,jac=jac,
                              constraints=clist[:j],
                              method='SLSQP',
                              options={'ftol': 1e-12,
                                       'maxiter': 1e3})
 
+        #If solve failed, default to an uncontrained solve
+        if np.isnan(max(solve.x)):
+            warning('Constrained solve silently failed on iteration %d' % j)
+            solve = spo.minimize(func,y0,tol=None,jac=jac,
+                                 constraints=[],
+                                 method='SLSQP',
+                                 options={'ftol': 1e-12,
+                                          'maxiter': 1e3})
+            
 
         if solve.message!='Optimization terminated successfully':
             if solve.message!='`xtol` termination condition is satisfied.':
