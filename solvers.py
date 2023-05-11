@@ -17,11 +17,14 @@ def constraint_checker(x,x0,Z,const_list):
         dev = max(dev, const['fun'](x,x0,Z))
     return dev
 
+#A wrapper to avoid late-binding issues
+class constraint_container:
+    def __init__(self,const,x0,Z):
+        self.constraint = lambda x : const['const'](x, x0, Z)
+        self.jacobian = lambda x : const['jac'](x, x0, Z)
+
 #FGMRES implementation, hand implemented for a fair comparison
-def gmres(A, b, x0, k, tol = 1e-50, pre = None, timing=None):
-    #Start timing
-    if timing:
-        t_start = time()
+def gmres(A, b, x0, k, tol = 1e-50, pre = None):
         
     #If not using preconditioner, set up identity as placeholder
     if pre is None:
@@ -54,8 +57,6 @@ def gmres(A, b, x0, k, tol = 1e-50, pre = None, timing=None):
     
     h = np.zeros((k+1,k))
 
-    if timing:
-        t_iter_start = time() 
     for j in range(k):
         steps = j+1
         y = np.asarray(A @ prefunc(q[j]))
@@ -78,25 +79,15 @@ def gmres(A, b, x0, k, tol = 1e-50, pre = None, timing=None):
         
         x.append(prefunc(np.transpose(q[:j+1,:])) @ yk + x0)
         residual.append(np.linalg.norm(A.dot(x[-1]) - b))
-        if timing:
-            t_iter = (time() - t_iter_start) / steps
+
         if residual[-1] < tol:
             break
-
-    #Report timings
-    if timing:
-        t_end = time()
-        timings = {'runtime': t_end - t_start,
-                   'iter_time': t_iter}
-    else:
-        timings = {}
 
     #Build output dictionary
     dict = {'name': 'gmres',
             'x':x,
             'res':residual[1:],
-            'steps': steps,
-            'timings': timings}
+            'steps': steps}
     
     return x[-1], dict
 
@@ -111,6 +102,11 @@ def cgmres(A, b ,x0, k,
 
     if timing:
         t_start = time()
+        jit = {'start': time(),
+                       'start_iter': [],
+                       'end_iter': [],
+                       'start_constraints': [],
+                       'end_constraints': []}
         ctol = 1e-5 #Lower constraint tolerance for speed
     else:
         ctol = 1e-12 #specify the tolerance to which constraints
@@ -130,6 +126,8 @@ def cgmres(A, b ,x0, k,
             except:
                 raise ValueError('Preconditioner not supported')
             return out
+
+    jit['end_pre'] = time()
 
     safety = None #Set up switch to make sure constraints are enforced
         
@@ -155,6 +153,8 @@ def cgmres(A, b ,x0, k,
         t_iter_start = time()
         constrained_steps = 0
     for j in range(k):
+        if timing:
+            jit['start_iter'].append(time())
         steps = j+1
         z[j] = np.asarray(prefunc(q[j]))
         y = np.asarray(A @ z[j])
@@ -176,7 +176,7 @@ def cgmres(A, b ,x0, k,
         Z = np.transpose(z[:j+1,:]) #Allocate current size of Z
         
 
-        #Set up function and jacobian
+        #Set up function and jacobian (of problem)
         def func(z):
             F = res - h[:j+2,:j+1] @ z
             out = np.inner(F,F)
@@ -187,14 +187,8 @@ def cgmres(A, b ,x0, k,
             Ht = np.transpose(h[:j+2,:j+1])
             return -2 * Ht @ F
         
-        #Add constraints
+        #Initialise constraint list
         clist = []
-        for const in conlist:
-            clist.append({"type": "eq",
-                          "fun": const['const'],
-                          "jac": const['jac'],
-                          "args": (x0,Z)})
-
 
         #Initialise guess
         y0 = np.zeros((j+1,))
@@ -213,7 +207,16 @@ def cgmres(A, b ,x0, k,
             try:
                 if timing:
                     constrained_steps += 1 #Add a constrained step
+                    jit['start_constraints'].append(time())
 
+                for const in conlist:
+                    cc = constraint_container(const,x0,Z)
+                    clist.append({"type": "eq",
+                                  "fun": cc.constraint,
+                                  "jac": cc.jacobian})
+                if timing:
+                    jit['end_constraints'].append(time())
+                    
                 solve = spo.minimize(func,y0,tol=None,jac=jac,
                                      constraints=clist[:],
                                      method='SLSQP',
@@ -257,26 +260,26 @@ def cgmres(A, b ,x0, k,
 
         #Measure iteration time
         if timing:
-            #Unconstrained timing
-            if constrained_steps==0:
-                t_iter_unconstrained = (time() - t_iter_start) / steps
-                t_iter_start_constrained = time()
-            #Constrained timing
-            else:
-                t_iter_constrained = (time() - t_iter_start_constrained) / constrained_steps
+            jit['end_iter'].append(time())
 
         if residual[-1] < tol and safety==True:
             break
 
     #Report timings
     if timing:
-        t_end = time()
-        timings = {'runtime': t_end-t_start,
-                   'iter_time_unconstrained': t_iter_unconstrained,
-                   'iter_time_constrained': t_iter_constrained,
+        jit['end'] = time()
+        iter_time = np.asarray(jit['end_iter'])-np.asarray(jit['start_iter'])
+        iter_unconstrained = iter_time[:-constrained_steps]
+        iter_constrained = iter_time[len(iter_unconstrained):]
+        timings = {'runtime': jit['end'] - jit['start'],
+                   'iter_time_unconstrained': np.mean(iter_unconstrained),
+                   'iter_time_constrained': np.mean(iter_constrained),
+                   'constraint_building': np.mean(np.asarray(jit['end_constraints'])
+                                                  - np.asarray(jit['start_constraints'])),
+                   'pretime': jit['end_pre'] - jit['start'],
                    'constrained_steps': constrained_steps}
     else:
-        timings = {}
+        timings = None
 
     #build output dictionary
     dict = {'name':'cgmres',

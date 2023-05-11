@@ -57,6 +57,8 @@ if __name__=="__main__":
     runtime = []
     time_unconstrained = []
     time_constrained = []
+    time_constraint = []
+    time_pre = []
     steps_unconstrained = []
     steps_constrained = []
     
@@ -67,14 +69,18 @@ if __name__=="__main__":
         runtime.append(out['runtime'])
         time_unconstrained.append(out['iter_time_unconstrained'])
         time_constrained.append(out['iter_time_constrained'])
+        time_pre.append(out['pretime'])
+        time_constraint.append(out['constraint_building'])
         steps_constrained.append(out['constrained_steps'])
         steps_unconstrained.append(out['unconstrained_steps'])
 
     #Tabulate
     d = {'M': M,
          'Run time': runtime,
+         'Preconditioning time': time_pre,
          'Average unconstrained iteration time': time_unconstrained,
          'Number of unconstrained iterations': steps_unconstrained,
+         'Average overhead from building constraints': time_constraint,
          'Average constrained iteration time': time_constrained,
          'Number of constrained iterations': steps_constrained}
     df = pd.DataFrame(data=d)

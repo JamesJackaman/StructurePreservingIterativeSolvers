@@ -63,10 +63,10 @@ def cgmresWrapper(dic,x0,k,tol=1e-50,pre=None,timing=None):
     return out
 
 
-def gmresWrapper(dic,x0,k,tol=1e-50,pre=None,timing=None):
+def gmresWrapper(dic,x0,k,tol=1e-50,pre=None):
     A = dic['A']
     b = dic['b']
     
-    out = solvers.gmres(A=A,b=b,x0=x0,k=k,tol=tol,pre=pre,timing=timing)
+    out = solvers.gmres(A=A,b=b,x0=x0,k=k,tol=tol,pre=pre)
     
     return out
