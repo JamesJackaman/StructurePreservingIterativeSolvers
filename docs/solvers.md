@@ -39,6 +39,16 @@ Here we use GMRES up to some user-specified tolerance `contol * tol`, and below 
 
 - `contol`: A constant larger than 1 determining when constraints should initially be enforced. Constrained solves are used when the residual is less than `contol * tol`. 
 
+#### Accepted constraint types
+
+The list of constraints `conlist` can take two different forms, and this form for each test problem can be found in [LinearSolver.py](experiments.md#linearsolver.py). In the general case, `conlist` is a list of dictionaries where an arbitrary dictionary `const` contains the constraint `const['func']` and its Jacobian `const['jac']`. General constraints are expected to depend on the initial guess $x_0$ and the preconditioned matrix obtained from Arnoldi $Z$. When optimising for speed, the constraints are input as a class containing the symmeteric matrix $M$, vector $v$ and constant $c$ for constraints of the form
+
+```math
+(x_0 + Zy)^T M (x_0 + Zy) + v^T (x_0 + Zy) + c = 0
+```
+
+where $y$ is the function we minimise in the residual minimisation step and $c$ is constant.
+
 ## Prototypical CGMRES
 
 As with CGMRES, the inputs and outputs are similar to FGMRES so we just introduce any differences here. This algorithm, given by the function `cgmres_p`, is used for testing how difficult it is to enforce constraints and follows the following procedure:
