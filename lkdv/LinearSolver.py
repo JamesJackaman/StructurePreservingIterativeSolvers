@@ -25,50 +25,26 @@ def cgmresWrapper(dic,x0,k,tol=1e-50,contol=10,timing=None):
     e0 = dic['e0']
 
     #Define constraints
-    def const1(z,x0,Q):#Depends on x0 and Q
-        X = x0 + Q @ z
-        out = np.transpose(omega) @ X - m0
-        return out
+    class mass:
+        def __init__(self):
+            self.M = 0 * A
+            self.v = np.transpose(omega)
+            self.c = - m0
 
-    def jac1(z,x0,Q):
-        return np.transpose(omega) @ Q
-    
-    def const2(z,x0,Q):
-        X = x0 + Q @ z
-        out = 0.5*np.transpose(X) @ M @ X - mo0
-        return out
+    class momentum:
+        def __init__(self):
+            self.M = M
+            self.v = np.zeros_like(x0)
+            self.c = - mo0
 
-    def jac2(z,x0,Q):
-        X = x0 + Q @ z
-        dX = Q
-        out = np.transpose(X) @ M @ dX
-        return out
-    
-    def const3(z,x0,Q):
-        X = x0 + Q @ z
-        out = 0.5 * np.transpose(X) @ L @ X \
-            - 0.5 * np.transpose(X) @ M @ X \
-            - e0
-        return out
-
-    def jac3(z,x0,Q):
-        X = x0 + Q @ z
-        dX = Q
-        out = np.transpose(X) @ L @ dX \
-            - np.transpose(X) @ M @ dX
-        return out
-
-    mass = {'const': const1,
-            'jac': jac1}
-
-    momentum = {'const': const2,
-                'jac': jac2}
-
-    energy = {'const': const3,
-              'jac': jac3}
+    class energy:
+        def __init__(self):
+            self.M = L - M
+            self.v = np.zeros_like(x0)
+            self.c = - e0
         
     #And stuff them in an ordered list
-    conlist = [mass,momentum,energy]
+    conlist = [mass(),momentum(),energy()]
 
     #If tolerance is not crazy small, use the cgmres with a tolerance
     if tol>1e-20:
@@ -83,7 +59,7 @@ def cgmresWrapper(dic,x0,k,tol=1e-50,contol=10,timing=None):
                              conlist=conlist)
     return out
 
-def gmresWrapper(dic,x0,k,tol=1e-50,contol=None,timing=None):
+def gmresWrapper(dic,x0,k,tol=1e-50,contol=None):
 
     if contol!=None:
         warnings.warn('Contol is ignored as not used in GMRES')
@@ -91,7 +67,7 @@ def gmresWrapper(dic,x0,k,tol=1e-50,contol=None,timing=None):
     A = dic['A']
     b = dic['b']
     
-    out = solvers.gmres(A=A,b=b,x0=x0,k=k,tol=tol,timing=timing)
+    out = solvers.gmres(A=A,b=b,x0=x0,k=k,tol=tol)
     
     return out
 

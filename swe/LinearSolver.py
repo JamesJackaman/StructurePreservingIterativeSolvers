@@ -20,34 +20,20 @@ def cgmresWrapper(dic,x0,k,tol=1e-50,pre=None,timing=None):
 
     
     #Define constraints
-    def const_mass(z,x0,Q):
-        X = x0 + Q @ z
-        out = np.transpose(omega) @ X - m0
-        return out
+    class mass:
+        def __init__(self):
+            self.M = 0 * A
+            self.v = np.transpose(omega)
+            self.c = - m0
 
-    def jac_mass(z,x0,Q):
-        dX = Q 
-        out = np.transpose(omega) @ dX
-        return out
-    
-    def const_energy(z,x0,Q):#Depends on x0 and Q
-        X = x0 + Q @ z
-        out = 0.5 * X @ L @ X - e0
-        return out
-
-    def jac_energy(z,x0,Q):
-        X = x0 + Q @ z
-        dX = Q
-        out = 0.5 * X @ L @ dX
-        return out
-
-    mass = {'const': const_mass,
-            'jac': jac_mass}
-    energy = {'const': const_energy,
-              'jac': jac_energy}
-
+    class energy:
+        def __init__(self):
+            self.M = L
+            self.v = np.zeros_like(x0)
+            self.c = -e0
+            
     #And stuff them in a list
-    conlist = [mass,energy]
+    conlist = [mass(),energy()]
 
     #If tol is set to be unreasonably small, use prototypical
     #algorithm to enforce constraints one-by-one

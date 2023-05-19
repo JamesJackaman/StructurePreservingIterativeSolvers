@@ -66,13 +66,13 @@ def cgmresWrapper(dic,x0,k,prob=None,pre=None,
             - np.transpose(X) @ M @ dX
         return out
     
-    mass = {'const': const1,
+    mass = {'func': const1,
             'jac': jac1}
 
-    momentum = {'const': const2,
+    momentum = {'func': const2,
                 'jac': jac2}
 
-    energy = {'const': const3,
+    energy = {'func': const3,
               'jac': jac3}
         
     #And stuff them in an ordered list

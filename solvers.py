@@ -20,8 +20,39 @@ def constraint_checker(x,x0,Z,const_list):
 #A wrapper to avoid late-binding issues
 class constraint_container:
     def __init__(self,const,x0,Z):
-        self.constraint = lambda x : const['const'](x, x0, Z)
-        self.jacobian = lambda x : const['jac'](x, x0, Z)
+        #Check constraint type
+        if hasattr(const, '__dict__'):#If constraint is in the form of
+                                      #a class, optimise for speed
+            self.optimise = True
+        elif type(const) is dict:#If given as a dictionary do not attempt to optimise
+            self.optimise = None
+        else:
+            raise NotImplementedError('Constraints must be either dictionaries or classes')
+        
+        if self.optimise:
+            self.MZ = const.M @ Z
+            self.term0 = 0.5 * x0 @ const.M @ x0 + const.c + const.v @ x0
+            self.term1 = const.v @ Z + x0 @ self.MZ
+            self.term2 = 0.5 * Z.T @ self.MZ
+        else:
+            self.const = const
+            self.x0 = x0
+            self.Z = Z
+
+    def constraint_func(self,z):
+        if self.optimise:
+            out = self.term0 + self.term1 @ z + z @ self.term2 @ z
+        else:
+            out = self.const['func'](z,self.x0,self.Z)
+        return out
+    def constraint_jac(self,z):
+        if self.optimise:
+            out = self.term1 + 2 * z @ self.term2
+        else:
+            out = self.const['jac'](z,self.x0,self.Z)
+        return out
+
+        
 
 #FGMRES implementation, hand implemented for a fair comparison
 def gmres(A, b, x0, k, tol = 1e-50, pre = None):
@@ -100,6 +131,8 @@ def cgmres(A, b ,x0, k,
            pre = None,
            timing = None):
 
+    ctol = 1e-12 #tolerance of minimisation problem
+    
     if timing:
         t_start = time()
         jit = {'start': time(),
@@ -107,10 +140,6 @@ def cgmres(A, b ,x0, k,
                        'end_iter': [],
                        'start_constraints': [],
                        'end_constraints': []}
-        ctol = 1e-5 #Lower constraint tolerance for speed
-    else:
-        ctol = 1e-12 #specify the tolerance to which constraints
-                     #*must* be enforced
     
     #If not using preconditioner, set up identity as placeholder
     if pre is None:
@@ -126,8 +155,6 @@ def cgmres(A, b ,x0, k,
             except:
                 raise ValueError('Preconditioner not supported')
             return out
-
-    jit['end_pre'] = time()
 
     safety = None #Set up switch to make sure constraints are enforced
         
@@ -202,7 +229,6 @@ def cgmres(A, b ,x0, k,
                                  method='SLSQP',
                                  options={'ftol': ctol**2,
                                           'maxiter': 1e3})
-
         else:
             try:
                 if timing:
@@ -210,13 +236,14 @@ def cgmres(A, b ,x0, k,
                     jit['start_constraints'].append(time())
 
                 for const in conlist:
+                    #Build constraint functions
                     cc = constraint_container(const,x0,Z)
                     clist.append({"type": "eq",
-                                  "fun": cc.constraint,
-                                  "jac": cc.jacobian})
+                                  "fun": cc.constraint_func,
+                                  "jac": cc.constraint_jac})
                 if timing:
                     jit['end_constraints'].append(time())
-                    
+
                 solve = spo.minimize(func,y0,tol=None,jac=jac,
                                      constraints=clist[:],
                                      method='SLSQP',
@@ -276,7 +303,6 @@ def cgmres(A, b ,x0, k,
                    'iter_time_constrained': np.mean(iter_constrained),
                    'constraint_building': np.mean(np.asarray(jit['end_constraints'])
                                                   - np.asarray(jit['start_constraints'])),
-                   'pretime': jit['end_pre'] - jit['start'],
                    'constrained_steps': constrained_steps}
     else:
         timings = None
@@ -308,6 +334,7 @@ def cgmres_p(A, b ,x0, k,
         def prefunc(vec):
             return pre.solve(vec)
     else:
+        
         def prefunc(vec):
             try:
                 out = pre @ vec
@@ -322,6 +349,7 @@ def cgmres_p(A, b ,x0, k,
     x.append(r)
          
     q = np.zeros((k+1,np.size(r)))
+    z = np.zeros((k+1,np.size(r)))
 
     beta = np.linalg.norm(r)
     
@@ -332,7 +360,8 @@ def cgmres_p(A, b ,x0, k,
     h = np.zeros((k+1,k))
     
     for j in range(k):
-        y = np.asarray(A @ prefunc(q[j]))
+        z[j] = np.asarray(prefunc(q[j]))
+        y = np.asarray(A @ z[j])
         
         for i in range(j+1):
             h[i,j] = np.dot(q[i],y)
@@ -344,8 +373,7 @@ def cgmres_p(A, b ,x0, k,
         res = np.zeros(j+2)
         res[0] = beta
 
-        Q = np.transpose(q[:j+1,:]) #Allocate current size of Q
-        Qt = np.transpose(Q)
+        Z = np.transpose(z[:j+1,:]) #Allocate current size of Z
 
         #Set up function and jacobian
         def func(z):
@@ -361,10 +389,10 @@ def cgmres_p(A, b ,x0, k,
         #Add constraints
         clist = []
         for const in conlist:
+            cc = constraint_container(const,x0,Z)
             clist.append({"type": "eq",
-                          "fun": const['const'],
-                          "jac": const['jac'],
-                          "args": (x0,prefunc(Q))})
+                          "fun": cc.constraint_func,
+                          "jac": cc.constraint_jac})
 
 
         #Initialise guess
@@ -397,7 +425,7 @@ def cgmres_p(A, b ,x0, k,
                                   RuntimeWarning)
         yk = solve.x
         
-        x.append(prefunc(Q) @ yk + x0)
+        x.append(Z @ yk + x0)
 
         #Compute residual
         residual.append(np.linalg.norm(A.dot(x[-1]) - b))
