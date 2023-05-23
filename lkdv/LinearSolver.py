@@ -13,7 +13,7 @@ import sys
 sys.path.insert(0,'../')
 import solvers
 
-def cgmresWrapper(dic,x0,k,tol=1e-50,contol=10):
+def cgmresWrapper(dic,x0,k,tol=1e-50,contol=10,timing=None):
 
     A = dic['A']
     b = dic['b']
@@ -25,33 +25,36 @@ def cgmresWrapper(dic,x0,k,tol=1e-50,contol=10):
     e0 = dic['e0']
 
     #Define constraints
-    def const1(z,x0,Q):#Depends on x0 and Q
-        X = x0 + Q @ z
-        out = np.transpose(omega) @ X - m0
-        return out
-    
-    def const2(z,x0,Q):
-        X = x0 + Q @ z
-        out = 0.5*np.transpose(X) @ M @ X - mo0
-        return out
-    
-    def const3(z,x0,Q):
-        X = x0 + Q @ z
-        out = 0.5 * np.transpose(X) @ L @ X \
-            - 0.5 * np.transpose(X) @ M @ X \
-            - e0
-        return out
+    class mass:
+        def __init__(self):
+            self.M = 0 * A
+            self.v = np.transpose(omega)
+            self.c = - m0
 
+    class momentum:
+        def __init__(self):
+            self.M = M
+            self.v = np.zeros_like(x0)
+            self.c = - mo0
+
+    class energy:
+        def __init__(self):
+            self.M = L - M
+            self.v = np.zeros_like(x0)
+            self.c = - e0
+        
     #And stuff them in an ordered list
-    conlist = [const1,const2,const3]
+    conlist = [mass(),momentum(),energy()]
 
     #If tolerance is not crazy small, use the cgmres with a tolerance
     if tol>1e-20:
         out = solvers.cgmres(A=A,b=b,x0=x0,k=k,tol=tol,contol=contol,
-                      conlist=conlist)
+                             conlist=conlist,timing=timing)
     #If tolerance is set to be unrealistically small, use prototypical
     #CGMRES to enforce constraints one-by-one
     else:
+        if timing!=None:
+            raise NotImplementedError('Timings are not available for prototypical solver')
         out = solvers.cgmres_p(A=A,b=b,x0=x0,k=k,
                              conlist=conlist)
     return out

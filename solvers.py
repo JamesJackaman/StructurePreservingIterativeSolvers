@@ -9,10 +9,54 @@ import matplotlib.pylab as plt
 import scipy.sparse as sps
 import scipy.optimize as spo
 import warnings
+from time import time
+
+def constraint_checker(x,x0,Z,const_list):
+    dev = 0
+    for const in const_list:
+        dev = max(dev, const['fun'](x,x0,Z))
+    return dev
+
+#A wrapper to avoid late-binding issues
+class constraint_container:
+    def __init__(self,const,x0,Z):
+        #Check constraint type
+        if hasattr(const, '__dict__'):#If constraint is in the form of
+                                      #a class, optimise for speed
+            self.optimise = True
+        elif type(const) is dict:#If given as a dictionary do not attempt to optimise
+            self.optimise = None
+        else:
+            raise NotImplementedError('Constraints must be either dictionaries or classes')
+        
+        if self.optimise:
+            self.MZ = const.M @ Z
+            self.term0 = 0.5 * x0 @ const.M @ x0 + const.c + const.v @ x0
+            self.term1 = const.v @ Z + x0 @ self.MZ
+            self.term2 = 0.5 * Z.T @ self.MZ
+        else:
+            self.const = const
+            self.x0 = x0
+            self.Z = Z
+
+    def constraint_func(self,z):
+        if self.optimise:
+            out = self.term0 + self.term1 @ z + z @ self.term2 @ z
+        else:
+            out = self.const['func'](z,self.x0,self.Z)
+        return out
+    def constraint_jac(self,z):
+        if self.optimise:
+            out = self.term1 + 2 * z @ self.term2
+        else:
+            out = self.const['jac'](z,self.x0,self.Z)
+        return out
+
+        
 
 #FGMRES implementation, hand implemented for a fair comparison
 def gmres(A, b, x0, k, tol = 1e-50, pre = None):
-
+        
     #If not using preconditioner, set up identity as placeholder
     if pre is None:
         pre = sps.identity(len(b))
@@ -43,7 +87,7 @@ def gmres(A, b, x0, k, tol = 1e-50, pre = None):
     q[0] = r / beta #normalise r0
     
     h = np.zeros((k+1,k))
-    
+
     for j in range(k):
         steps = j+1
         y = np.asarray(A @ prefunc(q[j]))
@@ -66,6 +110,7 @@ def gmres(A, b, x0, k, tol = 1e-50, pre = None):
         
         x.append(prefunc(np.transpose(q[:j+1,:])) @ yk + x0)
         residual.append(np.linalg.norm(A.dot(x[-1]) - b))
+
         if residual[-1] < tol:
             break
 
@@ -83,10 +128,18 @@ def cgmres(A, b ,x0, k,
            tol=1e-8,
            contol=10,#contol*tol is when constraints are first enforced
            conlist=[],
-           pre = None):
+           pre = None,
+           timing = None):
 
-    ctol = 1e-12 #specify the tolerance to which constraints *must* be
-                 #enforced
+    ctol = 1e-12 #tolerance of minimisation problem
+    
+    if timing:
+        t_start = time()
+        jit = {'start': time(),
+                       'start_iter': [],
+                       'end_iter': [],
+                       'start_constraints': [],
+                       'end_constraints': []}
     
     #If not using preconditioner, set up identity as placeholder
     if pre is None:
@@ -113,6 +166,7 @@ def cgmres(A, b ,x0, k,
     residual.append(np.linalg.norm(r))
          
     q = np.zeros((k+1,np.size(r)))
+    z = np.zeros((k+1,np.size(r)))
 
     beta = np.linalg.norm(r)
     
@@ -122,9 +176,15 @@ def cgmres(A, b ,x0, k,
     
     h = np.zeros((k+1,k))
 
+    if timing:
+        t_iter_start = time()
+        constrained_steps = 0
     for j in range(k):
+        if timing:
+            jit['start_iter'].append(time())
         steps = j+1
-        y = np.asarray(A @ prefunc(q[j]))
+        z[j] = np.asarray(prefunc(q[j]))
+        y = np.asarray(A @ z[j])
         
         for i in range(j+1):
             h[i,j] = np.dot(q[i],y)
@@ -139,53 +199,23 @@ def cgmres(A, b ,x0, k,
 
         res = np.zeros(j+2)
         res[0] = beta
+        
+        Z = np.transpose(z[:j+1,:]) #Allocate current size of Z
+        
 
-        Q = np.transpose(q[:j+1,:]) #Allocate current size of Q
-        Qt = np.transpose(Q)
-
-        #Set up function
+        #Set up function and jacobian (of problem)
         def func(z):
             F = res - h[:j+2,:j+1] @ z
             out = np.inner(F,F)
             return out
 
         def jac(z):
-            out = np.zeros_like(z)
-
-            #original term
             F = res - h[:j+2,:j+1] @ z
-            #Component wise differentiation of F
-            for m in range(len(z)):
-                ej = np.zeros_like(z)
-                ej[m] = 1 
-                dF = - h[:j+2,:j+1] @ ej
-
-                #assemble j-th component of jac
-                out[m] = 2 * np.inner(dF,F)
-                
-            return out
-
-        def hess(z):
-            dim = len(z)
-            out = np.zeros((dim,dim))
-            for n in range(dim):
-                for m in range(dim):
-                    e1 = np.zeros_like(z)
-                    e1[n] = 1
-                    e2 = np.zeros_like(z)
-                    e2[m] = 1
-                    #assemble n,m-th component of hessian
-                    out[n,m] = 2 * np.inner( h[:j+2,:j+1] @ e1, h[:j+2,:j+1] @ e2)
-
-            return out
+            Ht = np.transpose(h[:j+2,:j+1])
+            return -2 * Ht @ F
         
-        #Add constraints
+        #Initialise constraint list
         clist = []
-        for const in conlist:
-            clist.append({"type": "eq",
-                          "fun": const,
-                          "args": (x0,prefunc(Q))})
-
 
         #Initialise guess
         y0 = np.zeros((j+1,))
@@ -193,40 +223,54 @@ def cgmres(A, b ,x0, k,
             y0[:-1] = yk
             
         #For the first iterations use gmres
-        if residual[-1]>contol*tol and j<k:
-            solve = spo.minimize(func,y0,tol=None,jac=jac,hess=hess,
+        if residual[-1]>contol*tol and j<k-1:
+            solve = spo.minimize(func,y0,tol=None,jac=jac,
                                  constraints=[],
-                                 method='trust-constr',
-                                 options={'xtol': 1e-12,
-                                          'gtol': 1e-12,
-                                          'barrier_tol': 1e-12,
+                                 method='SLSQP',
+                                 options={'ftol': ctol**2,
                                           'maxiter': 1e3})
-
         else:
             try:
-                solve = spo.minimize(func,y0,tol=None,jac=jac,hess=hess,
+                if timing:
+                    constrained_steps += 1 #Add a constrained step
+                    jit['start_constraints'].append(time())
+
+                for const in conlist:
+                    #Build constraint functions
+                    cc = constraint_container(const,x0,Z)
+                    clist.append({"type": "eq",
+                                  "fun": cc.constraint_func,
+                                  "jac": cc.constraint_jac})
+                if timing:
+                    jit['end_constraints'].append(time())
+
+                solve = spo.minimize(func,y0,tol=None,jac=jac,
                                      constraints=clist[:],
-                                     method='trust-constr',
-                                     options={'xtol': ctol,
-                                              'gtol': ctol,
-                                              'barrier_tol': ctol,
-                                              'maxiter': 1e4})
+                                     method='SLSQP',
+                                     options={'ftol': ctol**2,
+                                              'maxiter': 1e3})
+
+                #check if constrained solver has silently failed
+                if not timing:
+                    if np.isnan(max(solve.x)):
+                        raise ValueError
+                
                 safety = True
-                #If constraints are violated, turn off safety to avoid
-                #possible termination on next iteration
-                if solve.constr_violation>ctol:
-                    safety = False
-                    warnings.warn("Iteration %d failed to preserve constraints with deviation of %e" % (j,solve.constr_violation),
-                                  RuntimeWarning)
+
+                # If constraints are violated, turn off safety to avoid
+                # possible termination on next iteration (slow so avoid when timing)
+                if not timing:
+                    if constraint_checker(solve.x,x0,Z,clist)>ctol:
+                        safety = False
+                        warnings.warn("Iteration %d failed to preserve constraints with deviation of %e" % (j,solve.constr_violation),
+                                      RuntimeWarning)
             except:
                 warning('Constrained solve failed, defaulted to standard solve for iteration %d.' % j \
                         + ' Problem likely overconstrained, a smaller solver tolerance may be required.')
-                solve = spo.minimize(func,y0,tol=None,jac=jac,hess=hess,
+                solve = spo.minimize(func,y0,tol=None,jac=jac,
                                      constraints=[],
-                                     method='trust-constr',
-                                     options={'xtol': 1e-12,
-                                              'gtol': 1e-12,
-                                              'barrier_tol': 1e-12,
+                                     method='SLSQP',
+                                     options={'ftol': ctol**2,
                                               'maxiter': 1e3})
                 
         if solve.message!='Optimization terminated successfully':
@@ -236,20 +280,39 @@ def cgmres(A, b ,x0, k,
                                   RuntimeWarning)
         yk = solve.x
         
-        x.append(prefunc(Q) @ yk + x0)
+        x.append(Z @ yk + x0)
 
         #Compute residual
         residual.append(np.linalg.norm(A.dot(x[-1]) - b))
 
+        #Measure iteration time
+        if timing:
+            jit['end_iter'].append(time())
+
         if residual[-1] < tol and safety==True:
             break
 
+    #Report timings
+    if timing:
+        jit['end'] = time()
+        iter_time = np.asarray(jit['end_iter'])-np.asarray(jit['start_iter'])
+        iter_unconstrained = iter_time[:-constrained_steps]
+        iter_constrained = iter_time[len(iter_unconstrained):]
+        timings = {'runtime': jit['end'] - jit['start'],
+                   'iter_time_unconstrained': np.mean(iter_unconstrained),
+                   'iter_time_constrained': np.mean(iter_constrained),
+                   'constraint_building': np.mean(np.asarray(jit['end_constraints'])
+                                                  - np.asarray(jit['start_constraints'])),
+                   'constrained_steps': constrained_steps}
+    else:
+        timings = None
 
     #build output dictionary
     dict = {'name':'cgmres',
             'x': x,
             'res': residual[1:],
-            'steps': steps}
+            'steps': steps,
+            'timings': timings}
 
     return x[-1], dict
 
@@ -271,6 +334,7 @@ def cgmres_p(A, b ,x0, k,
         def prefunc(vec):
             return pre.solve(vec)
     else:
+        
         def prefunc(vec):
             try:
                 out = pre @ vec
@@ -283,9 +347,9 @@ def cgmres_p(A, b ,x0, k,
     r = (b - A.dot(x0)) #define r0
 
     x.append(r)
-
          
     q = np.zeros((k+1,np.size(r)))
+    z = np.zeros((k+1,np.size(r)))
 
     beta = np.linalg.norm(r)
     
@@ -296,7 +360,8 @@ def cgmres_p(A, b ,x0, k,
     h = np.zeros((k+1,k))
     
     for j in range(k):
-        y = np.asarray(A @ prefunc(q[j]))
+        z[j] = np.asarray(prefunc(q[j]))
+        y = np.asarray(A @ z[j])
         
         for i in range(j+1):
             h[i,j] = np.dot(q[i],y)
@@ -308,51 +373,26 @@ def cgmres_p(A, b ,x0, k,
         res = np.zeros(j+2)
         res[0] = beta
 
-        Q = np.transpose(q[:j+1,:]) #Allocate current size of Q
-        Qt = np.transpose(Q)
+        Z = np.transpose(z[:j+1,:]) #Allocate current size of Z
 
-        #Set up function
+        #Set up function and jacobian
         def func(z):
             F = res - h[:j+2,:j+1] @ z
-            out = np.inner(F,F)
-            return out
+            return np.inner(F,F)
 
         def jac(z):
-            out = np.zeros_like(z)
-
-            #original term
             F = res - h[:j+2,:j+1] @ z
-            #Component wise differentiation of F
-            for m in range(len(z)):
-                ej = np.zeros_like(z)
-                ej[m] = 1 
-                dF = - h[:j+2,:j+1] @ ej
+            Ht = np.transpose(h[:j+2,:j+1])
+            return -2 * Ht @ F
 
-                #assemble j-th component of jac
-                out[m] = 2 * np.inner(dF,F)
-                
-            return out
-
-        def hess(z):
-            dim = len(z)
-            out = np.zeros((dim,dim))
-            for n in range(dim):
-                for m in range(dim):
-                    e1 = np.zeros_like(z)
-                    e1[n] = 1
-                    e2 = np.zeros_like(z)
-                    e2[m] = 1
-                    #assemble n,m-th component of hessian
-                    out[n,m] = 2 * np.inner( h[:j+2,:j+1] @ e1, h[:j+2,:j+1] @ e2)
-
-            return out
         
         #Add constraints
         clist = []
         for const in conlist:
+            cc = constraint_container(const,x0,Z)
             clist.append({"type": "eq",
-                          "fun": const,
-                          "args": (x0,prefunc(Q))})
+                          "fun": cc.constraint_func,
+                          "jac": cc.constraint_jac})
 
 
         #Initialise guess
@@ -361,15 +401,22 @@ def cgmres_p(A, b ,x0, k,
             y0[:-1] = yk
 
 
-        #For the first iteration just use gmres
-        solve = spo.minimize(func,y0,tol=tol,jac=jac,hess=hess,
+        #Try prototypical solver
+        solve = spo.minimize(func,y0,tol=1e-15,jac=jac,
                              constraints=clist[:j],
-                             method='trust-constr',
-                             options={'xtol': 1e-12,
-                                      'gtol': 1e-12,
-                                      'barrier_tol': 1e-12,
+                             method='SLSQP',
+                             options={'ftol': 1e-20,
                                       'maxiter': 1e3})
 
+        #If solve failed, default to an uncontrained solve
+        if np.isnan(max(solve.x)):
+            warning('Constrained solve silently failed on iteration %d' % j)
+            solve = spo.minimize(func,y0,tol=None,jac=jac,
+                                 constraints=[],
+                                 method='SLSQP',
+                                 options={'ftol': 1e-20,
+                                          'maxiter': 1e3})
+            
 
         if solve.message!='Optimization terminated successfully':
             if solve.message!='`xtol` termination condition is satisfied.':
@@ -378,7 +425,7 @@ def cgmres_p(A, b ,x0, k,
                                   RuntimeWarning)
         yk = solve.x
         
-        x.append(prefunc(Q) @ yk + x0)
+        x.append(Z @ yk + x0)
 
         #Compute residual
         residual.append(np.linalg.norm(A.dot(x[-1]) - b))

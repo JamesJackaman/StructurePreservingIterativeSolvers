@@ -182,6 +182,8 @@ Wrapper for the [linear solvers](solvers.md) incorporating problem specific info
 
 When utilising CGMRES, if the solver tolerance is set to be far below machine precision (`1e-20`) the solver defaults to a [prototypical](solvers.md#prototypical-cgmres) one which enforces constraints one-by-one. If the tolerance is reasonable a more [practical algorithm](solvers.md#cgmres) is used and the constraints are enforced near convergence.
 
+[Click here to read more about the forms of the constraints.](solvers.md/#acceptedconstrainttypes).
+
 ### Input
 
 `dic`: A python dictionary generated in [SelfTitled.py](#SelfTitled.py) containing the linear system and the vectors and matrices needed to form the constraints.
@@ -200,4 +202,4 @@ When utilising CGMRES, if the solver tolerance is set to be far below machine pr
 
 ### Output
 
-The same as the output of the linear solver in [solvers.py](solvers.md). The first output is the solution given by the algorithm, while the second is a dictionary containing auxiliary information used in other components of the code. 
+The same as the output of the linear solver in [solvers.py](solvers.md). The first output is the solution given by the algorithm, while the second is a dictionary containing auxiliary information used in other components of the code.

@@ -1,4 +1,5 @@
 # Structure preserving iterative linear solvers
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7419815.svg)](https://doi.org/10.5281/zenodo.7419815)
 
 **This repository is a suppliment to _[“Preconditioned Krylov solvers for structure-preserving discretisations”](https://doi.org/10.48550/arXiv.2212.05127)_, and contains a conservative GMRES implementation in addition to experiments for various constrained linear systems.**
 
@@ -34,13 +35,15 @@ We consider a variety of test problems, which are self contained within subfolde
 
 **[Evolve.py](docs/experiments.md#evolve.py)**: _Generates a solution over all time steps using a given linear solver. Outputs the global deviation in conserved quantities. Sometimes also outputs errors over time._
 
+**TimedSolve.py**: _Runs timed CGMRES solves for variable problem sizes and prints a markdown style  table containing the results._
+
 **[Error generation](docs/experiments.md#error-generation)**: _This is only implemented for [Runge-Kutta formulation of linear KdV](#runge-kutta-in-time) and is composed of `ErrorGenerator.py` (generates errors in parallel), `subcall.py` (a call to [Evolve.py](docs/experiments.md#evolve.py) using an argparser), and `ErrorPlotter.py` (generates plots by reading data written in `ErrorGenerator.py`)_
 
 **Plotting**: Almost all of the above scripts generate plots. By default, these plots will be saved to the subfolder `plots` and are not shown interactively.
 
 The additional auxiliary modules are also required, we describe them here for completeness. 
 
-**[SelfTitled.py](docs/experiments.md#selftitled.py)**: _The file sharing the name with the subfolder contains the assembly of the linear system and constraints._
+**[SelfTitled.py](docs/experiments.md#selftitled.py)**: _The file sharing the name with the subfolder contains the assembly of the linear system and objects required to build constraints._
 
 **[LinearSolver.py](docs/experiments.md#linearsolver.py)**: _Wrappers for the core solver functions given in `solvers.py`. In practice, these wrappers are only important for CGMRES to incorporate the constraints._
 
@@ -68,6 +71,7 @@ This experiments code can be found in the folder lkdv.
 | ------------------------------------- | ------------------ |
 | `SingleSolve.py`                      | :white_check_mark: |
 | `Evolve.py`                           | :white_check_mark: |
+| `TimedSolve.py`                       | :x:                |
 | `ErrorGenerator.py`/`ErrorPlotter.py` | :x:                |
 
 #### Runge-Kutta in time
@@ -78,6 +82,7 @@ These experiments can be found in lkdvRK.
 | ------------------------------------- | ------------------ |
 | `SingleSolve.py`                      | :white_check_mark: |
 | `Evolve.py`                           | :white_check_mark: |
+| `TimedSolve.py`                       | :x:                |
 | `ErrorGenerator.py`/`ErrorPlotter.py` | :white_check_mark: |
 
 ### 2D Linear rotating shallow water equations
@@ -100,6 +105,7 @@ This PDE conserves a mass $\int_\Omega \rho \ dx$ and an energy $\frac12 \int_\O
 | ------------------------------------- | ------------------ |
 | `SingleSolve.py`                      | :white_check_mark: |
 | `Evolve.py`                           | :white_check_mark: |
+| `TimedSolve.py`                       | :white_check_mark: |
 | `ErrorGenerator.py`/`ErrorPlotter.py` | :x:                |
 
 ### 2D Heat equation
@@ -115,4 +121,5 @@ which preserves mass $\int_\Omega u dx$ and dissipates energy $\frac{d}{dt} \int
 | ------------------------------------- | ------------------ |
 | `SingleSolve.py`                      | :white_check_mark: |
 | `Evolve.py`                           | :x:                |
+| `TimedSolve.py`                       | :white_check_mark: |
 | `ErrorGenerator.py`/`ErrorPlotter.py` | :x:                |
