@@ -18,34 +18,46 @@ def time_cgmres(M=2**3,degree=1,tol=1e-11,k=20):
     #Build system
     params, prob = swe.linforms(degree=degree,M=M)
     #preconditioner
-    M = sps.linalg.spilu(params['A'], drop_tol=1e-4,
+    pre = sps.linalg.spilu(params['A'], drop_tol=1e-4,
                          fill_factor=10)
     #Run a regular (more optimised GMRES solve)
     gmres_x, solvedict = ls.gmresWrapper(params,
                                          x0=np.zeros_like(params['b']),
                                          k=k,
                                          tol=tol,
-                                         pre=M)
+                                         pre=pre)
     
     #Run timed solve
     cgmres_x, geodict = ls.cgmresWrapper(params,
                                          x0=np.zeros_like(params['b']),
                                          k=k,
                                          tol=tol,
-                                         pre=M,
+                                         pre=pre,
                                          timing=True)
     #Check for gain in constraint enforcement (i.e., that cgmres is
     #doing something)
     gmres_inv = swe.compute_invariants(prob,gmres_x)
+    gmres_mass = abs(gmres_inv['mass']-params['m0'])
+    gmres_energy = abs(gmres_inv['energy']-params['e0'])
+    
     cgmres_inv = swe.compute_invariants(prob,cgmres_x)
-    if not (abs(cgmres_inv['mass']-params['m0']) < 2 * abs(gmres_inv['mass']-params['m0'])):
-        if not (abs(cgmres_inv['energy']-params['e0']) < 2*abs(gmres_inv['energy']-params['e0'])):
-            warning('CGMRES does not lead to a significant improvement '
-                    + 'in conservation with M=%s and tol=%s' % (M, tol))
+    cgmres_mass = abs(cgmres_inv['mass']-params['m0'])
+    cgmres_energy = abs(cgmres_inv['energy']-params['e0'])
+    if not (cgmres_mass < 0.5 * gmres_mass):
+        warning('CGMRES does not lead to a significant improvement in mass '
+                + 'conservation with M=%s and tol=%s' % (M, tol))
+    if not (cgmres_energy < 0.5 * gmres_energy):
+        warning('CGMRES does not lead to a significant improvement in energy '
+                + 'with M=%s and tol=%s' % (M, tol))
     #Extract timings
     out = geodict['timings']
     #Append additional information
     out['unconstrained_steps'] = geodict['steps'] - out['constrained_steps']
+
+    out['conservation'] = {'gmres_mass': gmres_mass,
+                           'gmres_energy': gmres_energy,
+                           'cgmres_mass': cgmres_mass,
+                           'cgmres_energy': cgmres_energy}
 
     return out
 
@@ -60,6 +72,8 @@ if __name__=="__main__":
     time_constraint = []
     steps_unconstrained = []
     steps_constrained = []
+    mass_gain = []
+    energy_gain = []
     
     #Compute timings
     for i in range(3,10):
@@ -71,6 +85,9 @@ if __name__=="__main__":
         time_constraint.append(out['constraint_building'])
         steps_constrained.append(out['constrained_steps'])
         steps_unconstrained.append(out['unconstrained_steps'])
+        con = out['conservation']
+        mass_gain.append(max(con['gmres_mass'],1e-16)/max(con['cgmres_mass'],1e-16))
+        energy_gain.append(max(con['gmres_energy'],1e-16)/max(con['cgmres_energy'],1e-16))
 
     #Tabulate
     d = {'M': M,
@@ -79,7 +96,9 @@ if __name__=="__main__":
          'Number of unconstrained iterations': steps_unconstrained,
          'Average overhead from building constraints': time_constraint,
          'Average constrained iteration time': time_constrained,
-         'Number of constrained iterations': steps_constrained}
+         'Number of constrained iterations': steps_constrained,
+         'Gain in mass conservation': mass_gain,
+         'Gain in energy conservation': energy_gain}
     df = pd.DataFrame(data=d)
 
     print(df.to_markdown())
