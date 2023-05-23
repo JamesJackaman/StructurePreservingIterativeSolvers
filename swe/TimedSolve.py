@@ -14,7 +14,7 @@ import visualise as vis
 
 
 #Get timings for single GMRES solve
-def time_cgmres(M=2**3,degree=1,tol=1e-7,k=20):
+def time_cgmres(M=2**3,degree=1,tol=1e-11,k=20):
     #Build system
     params, prob = swe.linforms(degree=degree,M=M)
     #preconditioner
@@ -58,7 +58,6 @@ if __name__=="__main__":
     time_unconstrained = []
     time_constrained = []
     time_constraint = []
-    time_pre = []
     steps_unconstrained = []
     steps_constrained = []
     
@@ -69,7 +68,6 @@ if __name__=="__main__":
         runtime.append(out['runtime'])
         time_unconstrained.append(out['iter_time_unconstrained'])
         time_constrained.append(out['iter_time_constrained'])
-        time_pre.append(out['pretime'])
         time_constraint.append(out['constraint_building'])
         steps_constrained.append(out['constrained_steps'])
         steps_unconstrained.append(out['unconstrained_steps'])
@@ -77,7 +75,6 @@ if __name__=="__main__":
     #Tabulate
     d = {'M': M,
          'Run time': runtime,
-         'Preconditioning time': time_pre,
          'Average unconstrained iteration time': time_unconstrained,
          'Number of unconstrained iterations': steps_unconstrained,
          'Average overhead from building constraints': time_constraint,
