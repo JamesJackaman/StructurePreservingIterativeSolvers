@@ -81,6 +81,7 @@ def gmres(A, b, x0, k, tol = 1e-50, pre = None):
     residual.append(np.linalg.norm(r))
          
     q = np.zeros((k+1,np.size(r)))
+    z = np.zeros((k+1,np.size(r)))
 
     beta = np.linalg.norm(r)
     
@@ -90,7 +91,8 @@ def gmres(A, b, x0, k, tol = 1e-50, pre = None):
 
     for j in range(k):
         steps = j+1
-        y = np.asarray(A @ prefunc(q[j]))
+        z[j] = np.asarray(prefunc(q[j]))
+        y = np.asarray(A @ z[j])
         
         for i in range(j+1):
             h[i,j] = np.dot(q[i],y)
@@ -105,10 +107,12 @@ def gmres(A, b, x0, k, tol = 1e-50, pre = None):
 
         res = np.zeros(j+2)
         res[0] = beta
-        
+
+        Z = np.transpose(z[:j+1,:]) #Allocate current size of z
+
         yk = np.linalg.lstsq(h[:j+2,:j+1], res, rcond=None)[0]
         
-        x.append(prefunc(np.transpose(q[:j+1,:])) @ yk + x0)
+        x.append(Z @ yk + x0)
         residual.append(np.linalg.norm(A.dot(x[-1]) - b))
 
         if residual[-1] < tol:
