@@ -5,6 +5,7 @@ import scipy.sparse.linalg as spsla
 import matplotlib.pylab as plt
 import scipy.sparse as sps
 import pandas as pd
+from time import time
 try:
     import pyamg
 except:
@@ -25,8 +26,10 @@ def time_cgmres(M=2**3,degree=1,tol=1e-7,k=20):
     #Build system
     params, prob = heat.linforms(degree=degree,M=M)
     #preconditioner
+    start_pre = time()
     ml = pyamg.ruge_stuben_solver(params['A'])
     pre = ml.aspreconditioner(cycle='V')
+    end_pre = time()
 
     #Get initial conditions
     Z = prob.function_space(prob.mesh)
@@ -35,11 +38,21 @@ def time_cgmres(M=2**3,degree=1,tol=1e-7,k=20):
     z0.assign(project(prob.ic(x,y),Z))
     
     #Run a regular (more optimised GMRES solve)
+    start_gmres = time()
     gmres_x, solvedict = ls.gmresWrapper(params,
                                          x0=np.zeros_like(params['b']),
                                          k=k,
                                          tol=tol,
                                          pre=pre)
+    end_gmres = time()
+
+    start_optimal = time()
+    # pak_x, _ = pyamg.krylov.fgmres(params['A'], params['b'],
+    #                               x0=np.zeros_like(params['b']),
+    #                               maxiter=k,
+    #                               tol=tol,
+    #                               M=pre)
+    end_optimal = time()
     
     #Run timed solve
     cgmres_x, geodict = ls.cgmresWrapper(params,
@@ -69,6 +82,9 @@ def time_cgmres(M=2**3,degree=1,tol=1e-7,k=20):
     out = geodict['timings']
     #Append additional information
     out['unconstrained_steps'] = geodict['steps'] - out['constrained_steps']
+    out['time_pre'] = end_pre - start_pre
+    out['time_gmres'] = end_gmres - start_gmres
+    out['time_optimal'] = end_optimal - start_optimal
     out['conservation'] = {'gmres_mass': gmres_mass,
                            'gmres_energy': gmres_energy,
                            'cgmres_mass': cgmres_mass,
@@ -86,6 +102,8 @@ if __name__=="__main__":
     time_unconstrained = []
     time_constrained = []
     time_pre = []
+    time_gmres = []
+    time_optimal = []
     time_constraint = []
     steps_unconstrained = []
     steps_constrained = []
@@ -100,6 +118,9 @@ if __name__=="__main__":
         time_unconstrained.append(out['iter_time_unconstrained'])
         time_constrained.append(out['iter_time_constrained'])
         time_constraint.append(out['constraint_building'])
+        time_pre.append(out['time_pre'])
+        time_gmres.append(out['time_gmres'])
+        time_optimal.append(out['time_optimal'])
         steps_constrained.append(out['constrained_steps'])
         steps_unconstrained.append(out['unconstrained_steps'])
         con = out['conservation']
@@ -109,7 +130,9 @@ if __name__=="__main__":
         
     #Tabulate
     d = {'M': M,
-         'Run time': runtime,
+         'Preconditioning time': time_pre,
+         'GMRES run time': time_gmres,
+         'CGMRES run time': runtime,
          'Average unconstrained iteration time': time_unconstrained,
          'Number of unconstrained iterations': steps_unconstrained,
          'Average overhead from building constraints': time_constraint,
@@ -119,4 +142,21 @@ if __name__=="__main__":
          'Gain in energy conservation': energy_gain}
     df = pd.DataFrame(data=d)
 
-    print(df.to_markdown())
+    #Improve formatting (need to switch to_markdown -> to_latex for
+    #this to work)
+    tf = '{:.2e}'
+    cf = '{:.1e}'
+    format_mapping = {#
+        'Preconditioning time': tf,
+        'GMRES run time': tf,
+        'CGMRES run time': tf,
+        'Average unconstrained iteration time': tf,
+        'Average overhead from building constraints': tf,
+        'Average constrained iteration time': tf,
+        'Gain in mass conservation': cf,
+        'Gain in energy conservation': cf,
+    }
+    for key, value in format_mapping.items():
+        df[key] = df[key].apply(value.format)
+
+    print(df.to_markdown(index=None))
