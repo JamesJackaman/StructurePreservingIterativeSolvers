@@ -227,7 +227,7 @@ def cgmres(A, b ,x0, k,
             y0[:-1] = yk
             
         #For the first iterations use gmres
-        if residual[-1]>contol*tol and j<k-1:
+        if residual[-1]>contol*tol and j<k-1 and safety==None:
             solve = spo.minimize(func,y0,tol=None,jac=jac,
                                  constraints=[],
                                  method='SLSQP',
@@ -247,7 +247,7 @@ def cgmres(A, b ,x0, k,
                                   "jac": cc.constraint_jac})
                 if timing:
                     jit['end_constraints'].append(time())
-
+                    
                 solve = spo.minimize(func,y0,tol=None,jac=jac,
                                      constraints=clist[:],
                                      method='SLSQP',
@@ -301,12 +301,14 @@ def cgmres(A, b ,x0, k,
         jit['end'] = time()
         iter_time = np.asarray(jit['end_iter'])-np.asarray(jit['start_iter'])
         iter_unconstrained = iter_time[:-constrained_steps]
-        iter_constrained = iter_time[len(iter_unconstrained):]
+        constraint_assembly = np.asarray(jit['end_constraints']) \
+            - np.asarray(jit['start_constraints'])
+        iter_constrained = iter_time[len(iter_unconstrained):] - constraint_assembly
+        
         timings = {'runtime': jit['end'] - jit['start'],
                    'iter_time_unconstrained': np.mean(iter_unconstrained),
                    'iter_time_constrained': np.mean(iter_constrained),
-                   'constraint_building': np.mean(np.asarray(jit['end_constraints'])
-                                                  - np.asarray(jit['start_constraints'])),
+                   'constraint_building': np.mean(constraint_assembly),
                    'constrained_steps': constrained_steps}
     else:
         timings = None
