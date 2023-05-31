@@ -15,12 +15,12 @@ import visualise as vis
 
 
 #Get timings for single GMRES solve
-def time_cgmres(M=2**3,degree=1,tol=1e-11,k=20):
+def time_cgmres(M=2**3,degree=1,tol=1e-7,k=20):
     #Build system
     params, prob = swe.linforms(degree=degree,M=M)
     #preconditioner
     start_pre = time()
-    pre = sps.linalg.spilu(params['A'], drop_tol=1e-4,
+    pre = sps.linalg.spilu(params['A'], drop_tol=1e-2,
                          fill_factor=10)
     end_pre = time()
     #Run a regular (more optimised GMRES solve)
@@ -85,7 +85,7 @@ if __name__=="__main__":
     energy_gain = []
     
     #Compute timings
-    for i in range(3,10):
+    for i in range(4,10):
         M.append(2**i)
         out = time_cgmres(M=M[-1])
         runtime.append(out['runtime'])
