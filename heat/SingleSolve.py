@@ -7,6 +7,14 @@ from firedrake import *
 import numpy as np
 import scipy.sparse.linalg as spsla
 import matplotlib.pylab as plt
+try:
+    import pyamg
+except:
+    import os
+    input('pyamg requried for preconditioning, press enter to pip install')
+    os.system('pip install pyamg')
+    import pyamg
+
 
 #local
 import heat
@@ -22,8 +30,8 @@ if __name__=="__main__":
     tol = 1e-50
 
     #Define preconditioner
-    M = spsla.spilu(params['A'], drop_tol=1e-3,
-                    fill_factor = 10)
+    ml = pyamg.ruge_stuben_solver(params['A'])
+    M = ml.aspreconditioner(cycle='V')
 
     M = None #comment out this line to turn on preconditioning
 
