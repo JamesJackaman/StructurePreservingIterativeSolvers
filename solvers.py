@@ -11,10 +11,10 @@ import scipy.optimize as spo
 import warnings
 from time import time
 
-def constraint_checker(x,x0,Z,const_list):
+def constraint_checker(x,const_list):
     dev = 0
     for const in const_list:
-        dev = max(dev, const['fun'](x,x0,Z))
+        dev = max(dev, const['fun'](x))
     return dev
 
 #A wrapper to avoid late-binding issues
@@ -264,7 +264,7 @@ def cgmres(A, b ,x0, k,
                 # If constraints are violated, turn off safety to avoid
                 # possible termination on next iteration (slow so avoid when timing)
                 if not timing:
-                    if constraint_checker(solve.x,x0,Z,clist)>ctol:
+                    if constraint_checker(solve.x,clist)>ctol:
                         safety = False
                         warnings.warn("Iteration %d failed to preserve constraints with deviation of %e" % (j,solve.constr_violation),
                                       RuntimeWarning)
