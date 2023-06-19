@@ -1,7 +1,7 @@
 # Structure preserving iterative linear solvers
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7419815.svg)](https://doi.org/10.5281/zenodo.7419815)
 
-**This repository is a suppliment to _[“Preconditioned Krylov solvers for structure-preserving discretisations”](https://doi.org/10.48550/arXiv.2212.05127)_, and contains a conservative GMRES implementation in addition to experiments for various constrained linear systems.**
+**This repository is a suppliment to _[“Constraint satisfying Krylov solvers for structure-preserving discretisations”](https://doi.org/10.48550/arXiv.2212.05127)_, and contains a conservative GMRES implementation in addition to experiments for various constrained linear systems.**
 
 ## Installation
 
@@ -17,11 +17,13 @@ This repository is not intended to maintain future compatibility with its depend
    - The Zenodo URL can be found [here](https://zenodo.org/record/7414962).
    - The DOI is 10.5281/zenodo.7414962.
    - The tag in the [Firedrake repo](https://github.com/firedrakeproject/firedrake) is `Firedrake_20221208.0`. 
-3. We recommend a manual installation of [Irksome](https://firedrakeproject.github.io/Irksome) with the git hash `1f5d7d6800a1f03ba1ce4f755fc500e33415966b` checked out.
+2. We recommend a manual installation of [Irksome](https://firedrakeproject.github.io/Irksome) with the git hash `1f5d7d6800a1f03ba1ce4f755fc500e33415966b` checked out.
 
 ### First thing to run
 
-Before using this code it is recommended to run `setup.py` inside the virtual environment. This will install the additional dependency [pandas](https://pandas.pydata.org) (version `1.5.0`), in addition to creating the subfolder `plots`.
+Before using this code it is recommended to run `setup.py` inside the virtual environment. This will install the additional dependency [pandas](https://pandas.pydata.org) (version `1.5.0`), in addition to creating the subfolder `plots`. 
+
+We note that to run experiments with the heat equation we currently use an AMG preconditioner from [PyAMG](https://pyamg.readthedocs.io), which will request to be pip installed if not found.
 
 ## What is CGMRES?
 

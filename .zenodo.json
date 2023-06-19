@@ -11,8 +11,8 @@
 	    "orcid": "0000-0002-6364-0684"
 	}
     ],
-    "description": "Code used to generate experiments in the article _Preconditioned Krylov solvers for structure-preserving discretisations_ by Jackaman and MacLachlan.",
+    "description": "Code used to generate experiments in `Constraint satisfying Krylov solvers for structure-preserving discretisations' by Jackaman and MacLachlan.",
     "license": "MIT",
-    "title": "Implementation of experiments in `Preconditioned Krylov solvers for structure-preserving discretisations'",
+    "title": "Implementation of experiments in `Constraint satisfying Krylov solvers for structure-preserving discretisations'",
     "upload_type": "software"
 }
