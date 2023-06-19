@@ -10,7 +10,7 @@ try:
     import pyamg
 except:
     import os
-    input('pyamg requried for preconditioning, press enter to pip install')
+    input('pyamg required for preconditioning, press enter to pip install')
     os.system('pip install pyamg')
     import pyamg
 
